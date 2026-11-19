@@ -55,6 +55,8 @@
   .tile.teal{background:var(--teal);color:var(--cream);box-shadow:0 5px 0 #123C46}
   .tile.plum{background:var(--plum);color:var(--cream);box-shadow:0 5px 0 #3F1A57}
   .tile.terra{background:var(--terracotta);color:var(--cream);box-shadow:0 5px 0 #7C3510}
+  .tile.honey{background:var(--honey);color:var(--ink);box-shadow:0 5px 0 #A06E12}
+  .tile.burg{background:var(--burgundy);color:var(--cream);box-shadow:0 5px 0 #4A1226}
   .tile.mint{background:var(--mint);color:#1B3B33;box-shadow:0 5px 0 #7FB89C}
   .tile.pinkt{background:var(--pink);color:#fff;box-shadow:0 5px 0 #8C0A42}
   .tile.white{background:#fff;color:var(--teal);border:3px solid var(--teal);box-shadow:0 5px 0 #A9C7CD;min-height:64px;flex-direction:row;gap:12px}
@@ -88,6 +90,57 @@
     display:flex;align-items:center;justify-content:center}
   .error{color:#B00039;font-weight:800;text-align:center;min-height:1.4em}
   .spacer{flex:1}
+
+  [hidden]{display:none !important}
+
+  /* ---------- Add Glaze wizard ---------- */
+  .dots{display:flex;gap:9px;justify-content:center;width:100%;min-height:16px}
+  .dots i{width:12px;height:12px;border-radius:50%;background:#E4D2BC}
+  .dots i.done{background:var(--teal)}
+  .dots i.cur{background:var(--pink);transform:scale(1.35)}
+  .g-body{width:100%;display:flex;flex-direction:column;gap:14px;flex:1}
+  .g-title{font-family:"Fraunces",Georgia,serif;font-weight:900;font-size:34px;line-height:1.1;color:var(--burgundy);text-align:center;margin:2px 0 0}
+  .g-sub{text-align:center;color:var(--teal);font-weight:700;font-size:18px;margin:0}
+  .g-same{text-align:center;color:var(--plum);font-weight:800;font-size:17px;margin:0}
+  .opt{appearance:none;font:inherit;font-weight:800;font-size:26px;cursor:pointer;width:100%;min-height:96px;
+    border-radius:24px;background:#fff;color:var(--teal);border:3px solid var(--teal);box-shadow:0 5px 0 #A9C7CD;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px}
+  .opt .hint{font-size:18px;font-weight:700;opacity:.85}
+  .opt:active{transform:translateY(3px)}
+  .opt.on,.chip.on{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 5px 0 #8C0A42}
+  .coat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%}
+  .coat-grid .opt{font-size:60px;min-height:130px;font-family:"Fraunces",Georgia,serif;font-weight:900}
+  .chips{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+  .chip{appearance:none;font:inherit;font-weight:800;font-size:20px;cursor:pointer;min-height:60px;padding:0 22px;
+    border-radius:30px;background:#fff;color:var(--teal);border:3px solid var(--teal);display:inline-flex;align-items:center;justify-content:center}
+  .chip.dashed{border-style:dashed;background:transparent}
+  .chip:active{transform:scale(.97)}
+  .sw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+  .sw{appearance:none;font:inherit;font-weight:800;font-size:18px;cursor:pointer;min-height:104px;border-radius:22px;
+    background:#fff;color:var(--ink);border:3px solid var(--teal);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+  .sw .dot{width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,0,0,.18)}
+  .sw.on{background:var(--pink);border-color:var(--pink);color:#fff}
+  .sw.on .dot{border-color:#fff}
+  .txt{width:100%;min-height:68px;font:inherit;font-size:24px;padding:12px 16px;border-radius:18px;
+    border:3px solid var(--teal);background:#fff;color:var(--ink);outline:none}
+  .txt:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(217,15,104,.2)}
+  textarea.txt{min-height:180px;resize:none}
+  .linkrow{display:block;text-align:center;font-size:20px;font-weight:800;color:var(--plum);padding:10px}
+  .photo-card{background:#fff;border:3px solid var(--teal);border-radius:24px;padding:14px;display:flex;flex-direction:column;gap:12px}
+  .photo-card h3{margin:0;font-size:22px;color:var(--burgundy)}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;min-height:84px;align-items:center}
+  .thumb{position:relative;width:84px;height:84px;border-radius:14px;overflow:hidden;border:3px solid var(--cream);box-shadow:0 0 0 2px #E4D2BC}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb button{position:absolute;top:2px;right:2px;width:36px;height:36px;border-radius:50%;border:0;background:#fff;color:var(--burgundy);font-size:24px;font-weight:900;line-height:1;cursor:pointer}
+  .hint2{color:#7a6670;font-size:18px}
+  .btnrow{display:flex;gap:10px}
+  .btnrow .chip{flex:1;padding:0 8px;font-size:19px}
+  .overlay{position:fixed;inset:0;background:rgba(251,241,227,.94);display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;z-index:60;font-family:"Fraunces",Georgia,serif;font-weight:900;font-size:34px;color:var(--burgundy)}
+  .overlay.show{display:flex}
+  .done-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;margin-top:6px}
+  .done-img{width:150px;height:150px;border-radius:28px;object-fit:cover;border:5px solid #fff;box-shadow:0 0 0 5px var(--teal),0 12px 20px rgba(0,0,0,.2)}
+  .done-name{font-size:26px;color:var(--teal);text-align:center}
 
   .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);
     background:#fff;border:3px solid var(--teal);color:var(--ink);font-weight:800;font-size:20px;
@@ -124,28 +177,10 @@
   <button id="login-btn" class="tile pinkt">Log in</button>
 </div>
 
-<!-- =============== HUB (landing) =============== -->
-<div id="screen-hub" class="screen">
-  <h1 class="logo"><span class="name js-name"></span><span class="sub js-sub"></span></h1>
-  <a id="tile-glassblock" class="tile tall teal" href="#">
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.500"/><rect x="13" y="3" width="8" height="8" rx="1.500"/><rect x="3" y="13" width="8" height="8" rx="1.500"/><rect x="13" y="13" width="8" height="8" rx="1.500"/></svg>
-    GlassBlock<span class="hint">Tag &amp; map glass blocks</span>
-  </a>
-  <button id="tile-studio" class="tile tall pinkt">
-    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.600 0 2-1 1.500-2-.600-1.200.200-2.500 1.700-2.500H17a4 4 0 004-4c0-5-4-9.500-9-9.500z"/><circle cx="7.500" cy="11" r="1.200" fill="#fff"/><circle cx="10" cy="7" r="1.200" fill="#fff"/><circle cx="15" cy="7" r="1.200" fill="#fff"/></svg>
-    Studio<span class="hint">Glazes, clay, tools &amp; more</span>
-  </button>
-  <div class="spacer"></div>
-  <button id="logout-btn" class="pill">Log out</button>
-</div>
-
 <!-- =============== STUDIO HOME =============== -->
 <div id="screen-studio" class="screen">
   <div class="top-bar">
-    <button class="pill js-go-hub">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
-      Home
-    </button>
+    <button id="logout-btn" class="pill">Log out</button>
     <span id="item-count" class="count"></span>
   </div>
 
@@ -159,6 +194,14 @@
   </button>
 
   <div class="grid2">
+    <button id="tile-wip" class="tile honey">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2B1A1F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12M6 21h12"/><path d="M7 3c0 5 5 6 5 9s-5 4-5 9"/><path d="M17 3c0 5-5 6-5 9s5 4 5 9"/></svg>
+      Works in Progress
+    </button>
+    <button id="tile-done" class="tile burg">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.700 5.500 6 .9-4.400 4.200 1 6L12 16.800 6.700 19.600l1-6L3.300 9.400l6-.9z"/></svg>
+      Finished Works
+    </button>
     <button id="tile-glazes" class="tile teal">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 4c3 1.500 5 4.500 5 8 0 3.300-2.700 6-7 6s-7-2.700-7-6c0-3.500 2-6.500 5-8z"/></svg>
       My Glazes
@@ -192,6 +235,10 @@
     </button>
   </div>
   <div class="h2">What are you adding?</div>
+  <button id="choose-work" class="tile row burg">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.700 5.500 6 .9-4.400 4.200 1 6L12 16.800 6.700 19.600l1-6L3.300 9.400l6-.9z"/></svg>
+    <span class="t">A Work<span class="hint">A piece you're making or have made</span></span>
+  </button>
   <button id="choose-glaze" class="tile row pinkt">
     <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 4c3 1.500 5 4.500 5 8 0 3.300-2.700 6-7 6s-7-2.700-7-6c0-3.500 2-6.500 5-8z"/></svg>
     <span class="t">A Glaze<span class="hint">One glaze you own</span></span>
@@ -210,6 +257,24 @@
   </button>
 </div>
 
+<!-- =============== ADD GLAZE (step-by-step) =============== -->
+<div id="screen-glaze" class="screen">
+  <div class="top-bar">
+    <button id="g-back" class="pill">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <button id="g-savenow" class="pill" hidden>Save now</button>
+  </div>
+  <div id="g-dots" class="dots" aria-hidden="true"></div>
+  <div id="g-body" class="g-body"></div>
+  <button id="g-next" class="tile pinkt" style="min-height:84px;font-size:28px">Next</button>
+</div>
+
+<input type="file" id="in-cam" accept="image/*" capture="environment" hidden>
+<input type="file" id="in-lib" accept="image/*" multiple hidden>
+<div id="overlay" class="overlay"><span id="overlay-text">Saving…</span></div>
+
 <div id="toast" class="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -217,9 +282,8 @@
 /* =====================================================================
    SETTINGS — the only part you need to edit
    ===================================================================== */
-const SUPABASE_URL = "https://prdylxlscsmsndxrwzpk.supabase.co";   // e.g. https://abcdxyz.supabase.co
-const SUPABASE_KEY = "sb_publishable_nXCSUQXO1kClzVR4l4l1kQ_pAokhVV4";        // the "anon" / "publishable" key
-const GLASSBLOCK_URL = "https://whatisedoing.github.io/GlassBlock/"; // e.g. https://yourname.github.io/glassblock/
+const SUPABASE_URL = "https://prdylxlscsmsndxrwzpk.supabase.co";
+const SUPABASE_KEY = "sb_publishable_nXCSUQXO1kClzVR4l4l1kQ_pAokhVV4";
 const APP_NAME = "Be Curious";
 const APP_SUBTITLE = "Lauren's Studio";
 /* ===================================================================== */
@@ -230,7 +294,6 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 document.title = APP_NAME;
 document.querySelectorAll(".js-name").forEach(e => e.textContent = APP_NAME);
 document.querySelectorAll(".js-sub").forEach(e => e.textContent = APP_SUBTITLE);
-$("tile-glassblock").href = GLASSBLOCK_URL;
 
 function show(name){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
@@ -261,9 +324,8 @@ $("password").addEventListener("keydown", e => { if(e.key === "Enter") doLogin()
 $("logout-btn").onclick = async () => { await sb.auth.signOut(); };
 
 /* ---------- navigation ---------- */
-$("tile-studio").onclick = () => { show("studio"); loadCount(); };
-document.querySelectorAll(".js-go-hub").forEach(b => b.onclick = () => show("hub"));
-document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = () => { show("studio"); loadCount(); });
+function goHome(){ show("studio"); loadCount(); }
+document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = goHome);
 $("add-item").onclick = () => show("add");
 
 /* ---------- studio home ---------- */
@@ -275,8 +337,319 @@ async function loadCount(){
 
 /* these all get built in the next steps */
 const soon = () => toast("Coming soon ✨");
-["tile-glazes","tile-combos","tile-clay","tile-tools","tile-search",
- "choose-glaze","choose-combo","choose-clay","choose-tool"].forEach(id => $(id).onclick = soon);
+["tile-wip","tile-done","tile-glazes","tile-combos","tile-clay","tile-tools","tile-search",
+ "choose-work","choose-combo","choose-clay","choose-tool"].forEach(id => $(id).onclick = soon);
+
+/* =====================================================================
+   ADD GLAZE — one question per screen
+   ===================================================================== */
+const STEPS = ["photos","name","brand","cone","application","coats","colour","texture","tags","notes"];
+const CONES   = [{v:"low", t:"Low fire",  h:"Cone 05/06"}, {v:"high", t:"High fire", h:"Cone 5/6"}];
+const APPS    = [{v:"dip", t:"Dip"}, {v:"spray", t:"Spray"}, {v:"other", t:"Other"}];
+const COATS   = [1, 2, 3, 4];
+const COLOURS = [
+  ["Red","#C62828"],["Orange","#EF6C00"],["Yellow","#F9C82E"],["Green","#2E8B57"],
+  ["Blue","#1F5FA8"],["Purple","#6B2F8F"],["Pink","#E8579A"],["Brown","#7B4A2A"],
+  ["Grey","#8A8F98"],["Black","#1B1B1B"],["White","#F4F1EA"],["Clear","repeating-linear-gradient(45deg,#fff 0 6px,#d8e6ea 6px 12px)"]
+];
+const TEXTURES = ["Glossy","Satin","Matte","Speckled","Crackle","Textured"];
+const STARTER_TAGS = ["Favourite","Layers well","Runs","Test again","Food safe"];
+const COMMON_BRANDS = [
+  {name:"Amaco", website:"https://www.amaco.com"}, {name:"Mayco", website:"https://www.maycocolors.com"},
+  {name:"Spectrum", website:"https://www.spectrumglazes.com"}, {name:"Duncan", website:"https://www.duncanceramics.com"},
+  {name:"Coyote", website:"https://www.coyoteclay.com"}, {name:"Laguna", website:"https://www.lagunaclay.com"}
+];
+const LAST_KEY = "studioLastGlaze", DRAFT_KEY = "studioGlazeDraft";
+
+const lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch(e){} };
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16); });
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let G = null, RESUME = null, BRANDS = [], KNOWN_TAGS = [], brandFormOpen = false, pendingKind = "jar";
+
+function newGlaze(){
+  const last = lsGet(LAST_KEY) || {};
+  const g = { id: uuid(), step: 0, photos: {jar:[], fired:[]}, name:"", brandId: last.brandId || null,
+    cone: last.cone || null, application: last.application || null, applicationNote:"", coats: last.coats || null,
+    colour: null, textures: [], tags: [], notes:"", itemSaved:false, same:{} };
+  ["brandId","cone","application","coats"].forEach(k => { if(g[k]) g.same[k] = true; });
+  return g;
+}
+function saveDraft(){
+  if(!G || G.step === "done") return;
+  const { photos, itemSaved, same, ...rest } = G;
+  lsSet(DRAFT_KEY, rest);
+}
+
+async function startGlaze(){
+  const draft = lsGet(DRAFT_KEY);
+  G = newGlaze();
+  if(draft && draft.name && draft.name.trim()){ RESUME = draft; G.step = "resume"; } else { RESUME = null; }
+  brandFormOpen = false;
+  show("glaze"); render();
+  loadBrands(); loadTags();
+}
+async function loadBrands(){
+  const { data, error } = await sb.from("studio_brands").select("id,name,website").order("name");
+  if(error){ console.error(error); return; }
+  BRANDS = data || []; if(G && STEPS[G.step] === "brand") render();
+}
+async function loadTags(){
+  const { data, error } = await sb.from("studio_items").select("tags").eq("category","glaze");
+  if(error){ console.error(error); return; }
+  const n = {}; (data || []).forEach(r => (r.tags || []).forEach(t => n[t] = (n[t] || 0) + 1));
+  KNOWN_TAGS = Object.keys(n).sort((a,b) => n[b] - n[a]);
+  if(G && STEPS[G.step] === "tags") render();
+}
+function brandLink(b){
+  if(b.website){ return /^https?:\/\//i.test(b.website) ? b.website : "https://" + b.website; }
+  return "https://www.google.com/search?q=" + encodeURIComponent(b.name + " glaze");
+}
+
+/* ---------- drawing each screen ---------- */
+function render(){
+  const s = G.step;
+  const name = (s === "resume" || s === "done") ? s : STEPS[s];
+  const isNum = typeof s === "number";
+  $("g-back").hidden = (s === "done");
+  $("g-savenow").hidden = !(isNum && s >= 1 && s < STEPS.length - 1 && G.name.trim());
+  $("g-dots").innerHTML = isNum ? STEPS.map((_, i) => `<i class="${i < s ? "done" : i === s ? "cur" : ""}"></i>`).join("") : "";
+  const nextBtn = $("g-next");
+  nextBtn.hidden = !isNum;
+  if(isNum){
+    if(name === "notes") nextBtn.textContent = "Save glaze";
+    else nextBtn.textContent = hasValue(name) ? "Next" : (name === "name" ? "Next" : "Skip");
+  }
+  $("g-body").innerHTML = BODIES[name]();
+  window.scrollTo(0,0);
+}
+function hasValue(step){
+  return {photos: G.photos.jar.length + G.photos.fired.length > 0, name: !!G.name.trim(), brand: !!G.brandId, cone: !!G.cone,
+    application: !!G.application, coats: !!G.coats, colour: !!G.colour, texture: G.textures.length > 0,
+    tags: G.tags.length > 0, notes: !!G.notes.trim()}[step];
+}
+const title = (t, sub) => `<h2 class="g-title">${t}</h2>${sub ? `<p class="g-sub">${sub}</p>` : ""}`;
+const sameNote = (k) => G.same[k] ? `<p class="g-same">Same as last time. Tap to keep it.</p>` : "";
+
+function photoCard(kind, heading, hint){
+  const arr = G.photos[kind];
+  const thumbs = arr.length
+    ? arr.map((p, i) => `<div class="thumb"><img src="${p.url}" alt=""><button data-act="rm" data-kind="${kind}" data-i="${i}" aria-label="Remove photo">×</button></div>`).join("")
+    : `<span class="hint2">${hint}</span>`;
+  return `<div class="photo-card"><h3>${heading}</h3><div class="thumbs">${thumbs}</div>
+    <div class="btnrow"><button class="chip" data-act="cam" data-kind="${kind}">Take photo</button>
+    <button class="chip" data-act="lib" data-kind="${kind}">From library</button></div></div>`;
+}
+
+const BODIES = {
+  resume: () => `${title("Welcome back!", "You didn't finish this one")}
+    <button class="opt" data-act="resume-yes">Continue “${esc(RESUME ? RESUME.name : "")}”</button>
+    <button class="opt" data-act="resume-no">Start a new glaze</button>`,
+
+  photos: () => `${title("Photos", "Totally optional. You can add more later.")}
+    ${photoCard("jar", "The jar or a swatch", "No photo yet")}
+    ${photoCard("fired", "A fired example", "No photo yet")}`,
+
+  name: () => `${title("What's it called?")}
+    <input id="g-name" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="e.g. Celadon Blue" value="${esc(G.name)}">`,
+
+  brand: () => {
+    const sel = BRANDS.find(b => b.id === G.brandId);
+    const mine = BRANDS.map(b => `<button class="chip ${G.brandId === b.id ? "on" : ""}" data-act="brand" data-id="${b.id}">${esc(b.name)}</button>`).join("");
+    const have = new Set(BRANDS.map(b => b.name.toLowerCase()));
+    const sug = COMMON_BRANDS.filter(b => !have.has(b.name.toLowerCase()))
+      .map(b => `<button class="chip dashed" data-act="suggest" data-name="${esc(b.name)}">+ ${esc(b.name)}</button>`).join("");
+    const link = sel ? `<a class="linkrow" href="${esc(brandLink(sel))}" target="_blank" rel="noopener">Visit ${esc(sel.name)}'s website ›</a>` : "";
+    const form = brandFormOpen
+      ? `<input id="bf-name" class="txt" type="text" autocapitalize="words" placeholder="Brand name">
+         <input id="bf-site" class="txt" type="text" inputmode="url" autocapitalize="none" placeholder="Website (optional)">
+         <button class="chip on" data-act="brand-save" style="min-height:64px">Add this brand</button>`
+      : `<button class="chip dashed" data-act="brand-new">+ A different brand</button>`;
+    return `${title("Who makes it?")}${sameNote("brandId")}
+      <div class="chips">${mine}${sug}</div>${link}<div class="chips" style="flex-direction:column;align-items:stretch">${form}</div>`;
+  },
+
+  cone: () => `${title("Which firing?")}${sameNote("cone")}` +
+    CONES.map(c => `<button class="opt ${G.cone === c.v ? "on" : ""}" data-act="pick" data-key="cone" data-val="${c.v}">${c.t}<span class="hint">${c.h}</span></button>`).join(""),
+
+  application: () => `${title("How do you apply it?")}${sameNote("application")}` +
+    APPS.map(a => `<button class="opt ${G.application === a.v ? "on" : ""}" data-act="pick" data-key="application" data-val="${a.v}">${a.t}</button>`).join("") +
+    (G.application === "other" ? `<input id="g-appnote" class="txt" type="text" placeholder="What kind? (optional)" value="${esc(G.applicationNote)}">` : ""),
+
+  coats: () => `${title("How many coats?")}${sameNote("coats")}
+    <div class="coat-grid">${COATS.map(n => `<button class="opt ${G.coats === n ? "on" : ""}" data-act="pick" data-key="coats" data-val="${n}">${n === 4 ? "4+" : n}</button>`).join("")}</div>`,
+
+  colour: () => `${title("What colour is it?")}
+    <div class="sw-grid">${COLOURS.map(([n, c]) => `<button class="sw ${G.colour === n ? "on" : ""}" data-act="pick" data-key="colour" data-val="${n}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`,
+
+  texture: () => `${title("What's it like?", "Pick as many as you like")}
+    <div class="chips">${TEXTURES.map(t => `<button class="chip ${G.textures.includes(t) ? "on" : ""}" data-act="multi" data-key="textures" data-val="${t}">${t}</button>`).join("")}</div>`,
+
+  tags: () => {
+    const all = [...KNOWN_TAGS, ...STARTER_TAGS.filter(t => !KNOWN_TAGS.includes(t)), ...G.tags.filter(t => !KNOWN_TAGS.includes(t) && !STARTER_TAGS.includes(t))];
+    return `${title("Any tags?", "Tap to add. Make up your own below.")}
+      <div class="chips">${all.map(t => `<button class="chip ${G.tags.includes(t) ? "on" : ""}" data-act="multi" data-key="tags" data-val="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <div style="display:flex;gap:10px;width:100%"><input id="g-tag" class="txt" type="text" placeholder="New tag" style="flex:1">
+      <button class="chip on" data-act="addtag" style="min-height:68px">Add</button></div>`;
+  },
+
+  notes: () => `${title("Anything to remember?")}
+    <textarea id="g-note" class="txt" placeholder="Notes (optional)">${esc(G.notes)}</textarea>`,
+
+  done: () => {
+    const img = G.photos.jar[0] || G.photos.fired[0];
+    return `<div class="done-wrap">
+      ${img ? `<img class="done-img" src="${img.url}" alt="">` : ""}
+      ${title("Saved!")}<div class="done-name">${esc(G.name)}</div>
+      <button class="tile pinkt" data-act="again" style="min-height:92px;font-size:28px">Add another glaze</button>
+      <button class="pill" data-act="finish" style="min-height:64px;font-size:22px">All done</button></div>`;
+  }
+};
+
+/* ---------- moving between screens ---------- */
+function goStep(delta){ G.step += delta; brandFormOpen = false; saveDraft(); render(); }
+function next(){
+  const step = STEPS[G.step];
+  if(step === "name" && !G.name.trim()){ toast("Please type a name first"); return; }
+  if(step === "notes"){ saveGlaze(); return; }
+  goStep(1);
+}
+$("g-next").onclick = next;
+$("g-back").onclick = () => {
+  if(typeof G.step !== "number" || G.step === 0){ show("add"); return; }
+  goStep(-1);
+};
+$("g-savenow").onclick = () => saveGlaze();
+$("choose-glaze").onclick = startGlaze;
+
+/* ---------- taps inside a screen ---------- */
+$("g-body").addEventListener("click", async (e) => {
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const act = el.dataset.act, key = el.dataset.key, val = el.dataset.val;
+  if(act === "pick"){
+    G[key] = (key === "coats") ? Number(val) : val; if(G.same) G.same[key] = false;
+    saveDraft(); render();
+    if(!(key === "application" && val === "other")) setTimeout(() => { if(G.step !== "done") next(); }, 260);
+  } else if(act === "multi"){
+    const arr = G[key], i = arr.indexOf(val); if(i >= 0) arr.splice(i, 1); else arr.push(val);
+    saveDraft(); render();
+  } else if(act === "brand"){
+    G.brandId = (G.brandId === el.dataset.id) ? null : el.dataset.id; G.same.brandId = false; saveDraft(); render();
+  } else if(act === "suggest"){
+    const b = COMMON_BRANDS.find(x => x.name === el.dataset.name); await addBrand(b.name, b.website);
+  } else if(act === "brand-new"){
+    brandFormOpen = true; render(); const f = $("bf-name"); if(f) f.focus();
+  } else if(act === "brand-save"){
+    const n = $("bf-name").value.trim(); if(!n){ toast("Please type the brand name"); return; }
+    await addBrand(n, $("bf-site").value.trim());
+  } else if(act === "addtag"){
+    addTypedTag();
+  } else if(act === "cam" || act === "lib"){
+    pendingKind = el.dataset.kind; $(act === "cam" ? "in-cam" : "in-lib").click();
+  } else if(act === "rm"){
+    const arr = G.photos[el.dataset.kind]; URL.revokeObjectURL(arr[Number(el.dataset.i)].url); arr.splice(Number(el.dataset.i), 1); render();
+  } else if(act === "resume-yes"){
+    const { step, ...rest } = RESUME; Object.assign(G, rest); G.id = RESUME.id; G.step = (typeof step === "number" ? step : 1); G.same = {}; render();
+  } else if(act === "resume-no"){
+    lsDel(DRAFT_KEY); G = newGlaze(); render();
+  } else if(act === "again"){
+    G = newGlaze(); render();
+  } else if(act === "finish"){
+    goHome();
+  }
+});
+$("g-body").addEventListener("input", (e) => {
+  if(e.target.id === "g-name"){ G.name = e.target.value; $("g-savenow").hidden = !G.name.trim(); }
+  else if(e.target.id === "g-note") G.notes = e.target.value;
+  else if(e.target.id === "g-appnote") G.applicationNote = e.target.value;
+  saveDraft();
+});
+$("g-body").addEventListener("keydown", (e) => {
+  if(e.key !== "Enter") return;
+  if(e.target.id === "g-name"){ e.preventDefault(); next(); }
+  else if(e.target.id === "g-tag"){ e.preventDefault(); addTypedTag(); }
+});
+function addTypedTag(){
+  const inp = $("g-tag"); const t = inp.value.trim(); if(!t) return;
+  const existing = [...KNOWN_TAGS, ...STARTER_TAGS, ...G.tags].find(x => x.toLowerCase() === t.toLowerCase());
+  const tag = existing || t; if(!G.tags.includes(tag)) G.tags.push(tag);
+  saveDraft(); render();
+}
+async function addBrand(name, website){
+  const found = BRANDS.find(b => b.name.toLowerCase() === name.toLowerCase());
+  if(found){ G.brandId = found.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render(); return; }
+  const { data, error } = await sb.from("studio_brands").insert({ name, website: website || null }).select("id,name,website").single();
+  if(error){ console.error(error); toast("Couldn't add that brand. Try again."); return; }
+  BRANDS.push(data); BRANDS.sort((a,b) => a.name.localeCompare(b.name));
+  G.brandId = data.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render();
+}
+
+/* ---------- photos: shrink them, then keep them until saved ---------- */
+async function shrink(file){
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
+  catch(e){
+    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+  }
+  const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, k = Math.min(1, 1600 / Math.max(w, h));
+  const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise(res => c.toBlob(res, "image/jpeg", 0.82));
+}
+async function takeFiles(input){
+  const files = Array.from(input.files || []); input.value = "";
+  for(const f of files){
+    try { const blob = await shrink(f); G.photos[pendingKind].push({ blob, url: URL.createObjectURL(blob) }); }
+    catch(e){ console.error(e); toast("That photo didn't work. Try another."); }
+  }
+  if(STEPS[G.step] === "photos") render();
+}
+$("in-cam").addEventListener("change", e => takeFiles(e.target));
+$("in-lib").addEventListener("change", e => takeFiles(e.target));
+
+/* ---------- saving ---------- */
+function overlay(msg){ $("overlay-text").textContent = msg || ""; $("overlay").classList.toggle("show", !!msg); }
+async function saveGlaze(){
+  if(!G.name.trim()){ toast("Please type a name first"); return; }
+  overlay("Saving…");
+  try {
+    const { data: u } = await sb.auth.getUser(); const uid = u.user.id;
+    if(!G.itemSaved){
+      const details = { cone: G.cone, application: G.application, coats: G.coats };
+      if(G.application === "other" && G.applicationNote.trim()) details.application_note = G.applicationNote.trim();
+      Object.keys(details).forEach(k => details[k] == null && delete details[k]);
+      const { error } = await sb.from("studio_items").insert({
+        id: G.id, category: "glaze", name: G.name.trim(), brand_id: G.brandId, colour: G.colour,
+        texture: G.textures.length ? G.textures.join(", ") : null, tags: G.tags, notes: G.notes.trim() || null, details });
+      if(error) throw error;
+      G.itemSaved = true;
+    }
+    let failed = 0;
+    for(const kind of ["jar","fired"]){
+      const keep = [];
+      for(const p of G.photos[kind]){
+        if(p.done){ keep.push(p); continue; }
+        const path = `${uid}/${G.id}/${uuid()}.jpg`;
+        const up = await sb.storage.from("studio-photos").upload(path, p.blob, { contentType: "image/jpeg" });
+        let ok = !up.error;
+        if(ok){ const r = await sb.from("studio_photos").insert({ item_id: G.id, kind, path }); ok = !r.error; }
+        if(ok){ p.done = true; } else failed++;
+        keep.push(p);
+      }
+      G.photos[kind] = keep;
+    }
+    overlay("");
+    if(failed){ toast(failed + (failed === 1 ? " photo" : " photos") + " didn't upload. Tap Save again to retry."); return; }
+    lsSet(LAST_KEY, { brandId: G.brandId, cone: G.cone, application: G.application, coats: G.coats });
+    lsDel(DRAFT_KEY);
+    G.step = "done"; render();
+  } catch(err){
+    console.error(err); overlay(""); toast("Couldn't save. Check your connection and try again.");
+  }
+}
 
 /* ---------- start-up: keep her logged in ---------- */
 function onlyIfOnLoginOrLoading(){
@@ -284,11 +657,11 @@ function onlyIfOnLoginOrLoading(){
 }
 sb.auth.onAuthStateChange((_event, session) => {
   if(!session) show("login");
-  else if(onlyIfOnLoginOrLoading()) show("hub");
+  else if(onlyIfOnLoginOrLoading()) goHome();
 });
 sb.auth.getSession().then(({ data }) => {
   if(!data.session) show("login");
-  else if(onlyIfOnLoginOrLoading()) show("hub");
+  else if(onlyIfOnLoginOrLoading()) goHome();
 });
 </script>
 </body>
