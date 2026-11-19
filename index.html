@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF1E3">
+<title>Be Curious</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF1E3; --ink:#2B1A1F; --burgundy:#7A1F3D; --teal:#1F5F6E; --pink:#D90F68;
+    --mint:#BDEBD3; --plum:#6B2F8F; --terracotta:#B8531F; --honey:#E3A33A; --blush:#FF9DC2;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;background:var(--cream);color:var(--ink);
+    font-family:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:20px;font-weight:700}
+  body{min-height:100vh;min-height:100dvh;
+    background:radial-gradient(circle at 90% 100%, rgba(227,163,58,.22), transparent 50%), var(--cream);
+    padding-bottom:env(safe-area-inset-bottom)}
+
+  /* rug zigzag band across the top */
+  .band{height:22px;background:
+    linear-gradient(135deg,var(--burgundy) 25%,transparent 25%) -11px 0,
+    linear-gradient(225deg,var(--burgundy) 25%,transparent 25%) -11px 0,
+    linear-gradient(315deg,var(--teal) 25%,transparent 25%),
+    linear-gradient(45deg,var(--teal) 25%,transparent 25%);
+    background-size:22px 22px;background-color:var(--cream)}
+
+  .screen{display:none;min-height:calc(100vh - 22px);min-height:calc(100dvh - 22px);flex-direction:column;align-items:center;
+    padding:18px 24px 36px;max-width:520px;margin:0 auto;gap:14px}
+  .screen.active{display:flex}
+
+  .logo{font-family:"Fraunces",Georgia,serif;text-align:center;line-height:1;margin:0}
+  .logo .name{display:block;font-weight:900;font-size:50px;color:var(--burgundy);text-shadow:3px 3px 0 var(--blush)}
+  .logo .sub{display:block;margin-top:8px;font-family:"Nunito",system-ui,sans-serif;font-weight:800;font-size:17px;
+    letter-spacing:3px;text-transform:uppercase;color:var(--teal)}
+  .logo.small .name{font-size:42px}
+
+  .top-bar{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .count{font-weight:800;font-size:22px;color:var(--burgundy)}
+
+  .pill{appearance:none;font:inherit;font-weight:800;font-size:20px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:8px;min-height:52px;padding:0 20px;border-radius:26px;
+    background:#fff;border:3px solid var(--teal);color:var(--teal);text-decoration:none}
+  .pill svg{flex:none}
+  .pill:active{transform:scale(.97)}
+
+  /* tiles */
+  .tile{appearance:none;border:0;font:inherit;font-weight:800;font-size:22px;cursor:pointer;text-decoration:none;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;
+    min-height:104px;width:100%;border-radius:24px;padding:10px;transition:transform .08s}
+  .tile:active{transform:translateY(3px)}
+  .tile.teal{background:var(--teal);color:var(--cream);box-shadow:0 5px 0 #123C46}
+  .tile.plum{background:var(--plum);color:var(--cream);box-shadow:0 5px 0 #3F1A57}
+  .tile.terra{background:var(--terracotta);color:var(--cream);box-shadow:0 5px 0 #7C3510}
+  .tile.mint{background:var(--mint);color:#1B3B33;box-shadow:0 5px 0 #7FB89C}
+  .tile.pinkt{background:var(--pink);color:#fff;box-shadow:0 5px 0 #8C0A42}
+  .tile.white{background:#fff;color:var(--teal);border:3px solid var(--teal);box-shadow:0 5px 0 #A9C7CD;min-height:64px;flex-direction:row;gap:12px}
+  .tile .hint{font-size:16px;font-weight:700;opacity:.9}
+  .tile.row{flex-direction:row;justify-content:flex-start;gap:18px;padding:0 24px;min-height:96px;text-align:left}
+  .tile.row .t{display:flex;flex-direction:column;gap:2px}
+  .tile.tall{min-height:170px;font-size:30px}
+  .tile.tall .hint{font-size:17px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%}
+
+  /* the wide Add Item bar */
+  .add-item{appearance:none;border:0;font:inherit;cursor:pointer;width:100%;min-height:104px;margin:12px 0 10px;
+    border-radius:28px;display:flex;align-items:center;justify-content:center;gap:14px;color:#fff;
+    background:radial-gradient(circle at 25% 20%, #FF5FA8, var(--pink) 65%);
+    box-shadow:0 0 0 5px var(--cream),0 0 0 10px var(--teal),0 16px 22px rgba(122,31,61,.3);
+    font-family:"Fraunces",Georgia,serif;font-weight:900;font-size:38px;line-height:1;position:relative}
+  .add-item:active{transform:scale(.97)}
+  .spark{position:absolute;pointer-events:none}
+
+  .h2{font-family:"Fraunces",Georgia,serif;font-weight:900;font-size:34px;color:var(--burgundy);text-align:center;margin:6px 0 4px}
+
+  /* login */
+  .field{width:100%;display:flex;flex-direction:column;gap:8px}
+  .field label{font-size:20px;color:var(--burgundy);font-weight:800}
+  .field input{width:100%;min-height:64px;font:inherit;font-size:22px;padding:12px 16px;border-radius:16px;
+    background:#fff;color:var(--ink);border:3px solid var(--teal);outline:none}
+  .field input:focus{border-color:var(--pink);box-shadow:0 0 0 4px rgba(217,15,104,.2)}
+  .pw-row{display:flex;gap:10px;width:100%}
+  .pw-row input{flex:1}
+  .pw-row button{min-width:72px;border-radius:16px;border:3px solid var(--teal);background:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center}
+  .error{color:#B00039;font-weight:800;text-align:center;min-height:1.4em}
+  .spacer{flex:1}
+
+  .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(30px);
+    background:#fff;border:3px solid var(--teal);color:var(--ink);font-weight:800;font-size:20px;
+    padding:16px 22px;border-radius:18px;box-shadow:0 8px 20px rgba(0,0,0,.2);
+    opacity:0;pointer-events:none;transition:all .25s;max-width:90vw;text-align:center;z-index:50}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .loading{color:var(--teal);font-size:22px;margin-top:35vh}
+</style>
+</head>
+<body>
+
+<div class="band" aria-hidden="true"></div>
+
+<!-- =============== LOADING =============== -->
+<div id="screen-loading" class="screen active"><div class="loading">Loading…</div></div>
+
+<!-- =============== LOGIN =============== -->
+<div id="screen-login" class="screen">
+  <h1 class="logo"><span class="name js-name"></span><span class="sub js-sub"></span></h1>
+  <div class="field">
+    <label for="email">Email</label>
+    <input id="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" autocorrect="off">
+  </div>
+  <div class="field">
+    <label for="password">Password</label>
+    <div class="pw-row">
+      <input id="password" type="password" autocomplete="current-password">
+      <button type="button" id="pw-toggle" aria-label="Show or hide password">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+  </div>
+  <div id="login-error" class="error"></div>
+  <button id="login-btn" class="tile pinkt">Log in</button>
+</div>
+
+<!-- =============== HUB (landing) =============== -->
+<div id="screen-hub" class="screen">
+  <h1 class="logo"><span class="name js-name"></span><span class="sub js-sub"></span></h1>
+  <a id="tile-glassblock" class="tile tall teal" href="#">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.500"/><rect x="13" y="3" width="8" height="8" rx="1.500"/><rect x="3" y="13" width="8" height="8" rx="1.500"/><rect x="13" y="13" width="8" height="8" rx="1.500"/></svg>
+    GlassBlock<span class="hint">Tag &amp; map glass blocks</span>
+  </a>
+  <button id="tile-studio" class="tile tall pinkt">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 100 18c1.600 0 2-1 1.500-2-.600-1.200.200-2.500 1.700-2.500H17a4 4 0 004-4c0-5-4-9.500-9-9.500z"/><circle cx="7.500" cy="11" r="1.200" fill="#fff"/><circle cx="10" cy="7" r="1.200" fill="#fff"/><circle cx="15" cy="7" r="1.200" fill="#fff"/></svg>
+    Studio<span class="hint">Glazes, clay, tools &amp; more</span>
+  </button>
+  <div class="spacer"></div>
+  <button id="logout-btn" class="pill">Log out</button>
+</div>
+
+<!-- =============== STUDIO HOME =============== -->
+<div id="screen-studio" class="screen">
+  <div class="top-bar">
+    <button class="pill js-go-hub">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+      Home
+    </button>
+    <span id="item-count" class="count"></span>
+  </div>
+
+  <h1 class="logo small"><span class="name js-name"></span><span class="sub js-sub"></span></h1>
+
+  <button id="add-item" class="add-item">
+    <svg class="spark" style="left:12px;top:-30px" width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z" fill="#E3A33A"/></svg>
+    <svg class="spark" style="right:20px;top:-28px" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z" fill="#6B2F8F"/></svg>
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 4v16M4 12h16"/></svg>
+    Add Item
+  </button>
+
+  <div class="grid2">
+    <button id="tile-glazes" class="tile teal">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 4c3 1.500 5 4.500 5 8 0 3.300-2.700 6-7 6s-7-2.700-7-6c0-3.500 2-6.500 5-8z"/></svg>
+      My Glazes
+    </button>
+    <button id="tile-combos" class="tile plum">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+      Glaze Combos
+    </button>
+    <button id="tile-clay" class="tile terra">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 15c0-5 3-9 8-9s8 4 8 9c0 2-1.500 3-3 3H7c-1.500 0-3-1-3-3z"/></svg>
+      Clay Bodies
+    </button>
+    <button id="tile-tools" class="tile mint">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#1B3B33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.500 6.500a4 4 0 005 5L20 12l-8 8a2.100 2.100 0 01-3-3l8-8z"/><path d="M5 5l4 4"/></svg>
+      Tools
+    </button>
+  </div>
+
+  <button id="tile-search" class="tile white">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><circle cx="10.500" cy="10.500" r="6.500"/><path d="M16 16l5 5"/></svg>
+    Search everything
+  </button>
+</div>
+
+<!-- =============== ADD ITEM: what are you adding? =============== -->
+<div id="screen-add" class="screen">
+  <div class="top-bar">
+    <button class="pill js-go-studio">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+  </div>
+  <div class="h2">What are you adding?</div>
+  <button id="choose-glaze" class="tile row pinkt">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6l-1 4c3 1.500 5 4.500 5 8 0 3.300-2.700 6-7 6s-7-2.700-7-6c0-3.500 2-6.500 5-8z"/></svg>
+    <span class="t">A Glaze<span class="hint">One glaze you own</span></span>
+  </button>
+  <button id="choose-combo" class="tile row plum">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+    <span class="t">A Glaze Combo<span class="hint">Two or more glazes together</span></span>
+  </button>
+  <button id="choose-clay" class="tile row terra">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#FBF1E3" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 15c0-5 3-9 8-9s8 4 8 9c0 2-1.500 3-3 3H7c-1.500 0-3-1-3-3z"/></svg>
+    <span class="t">A Clay Body<span class="hint">A clay you have</span></span>
+  </button>
+  <button id="choose-tool" class="tile row mint">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#1B3B33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.500 6.500a4 4 0 005 5L20 12l-8 8a2.100 2.100 0 01-3-3l8-8z"/><path d="M5 5l4 4"/></svg>
+    <span class="t">A Tool<span class="hint">Something in your studio</span></span>
+  </button>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* =====================================================================
+   SETTINGS — the only part you need to edit
+   ===================================================================== */
+const SUPABASE_URL = "PASTE-YOUR-SUPABASE-URL-HERE";   // e.g. https://abcdxyz.supabase.co
+const SUPABASE_KEY = "PASTE-YOUR-ANON-KEY-HERE";        // the "anon" / "publishable" key
+const GLASSBLOCK_URL = "PASTE-YOUR-GLASSBLOCK-ADDRESS-HERE"; // e.g. https://yourname.github.io/glassblock/
+const APP_NAME = "Be Curious";
+const APP_SUBTITLE = "Lauren's Studio";
+/* ===================================================================== */
+
+const $ = (id) => document.getElementById(id);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.title = APP_NAME;
+document.querySelectorAll(".js-name").forEach(e => e.textContent = APP_NAME);
+document.querySelectorAll(".js-sub").forEach(e => e.textContent = APP_SUBTITLE);
+$("tile-glassblock").href = GLASSBLOCK_URL;
+
+function show(name){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  $("screen-" + name).classList.add("active");
+  window.scrollTo(0,0);
+}
+let toastTimer;
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+/* ---------- login ---------- */
+$("pw-toggle").onclick = () => {
+  const p = $("password"); p.type = p.type === "password" ? "text" : "password";
+};
+async function doLogin(){
+  $("login-error").textContent = "";
+  const email = $("email").value.trim(), password = $("password").value;
+  if(!email || !password){ $("login-error").textContent = "Please type your email and password."; return; }
+  $("login-btn").disabled = true; $("login-btn").textContent = "Logging in…";
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  $("login-btn").disabled = false; $("login-btn").textContent = "Log in";
+  if(error){ $("login-error").textContent = "That didn't work. Check your email and password."; }
+}
+$("login-btn").onclick = doLogin;
+$("password").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
+$("logout-btn").onclick = async () => { await sb.auth.signOut(); };
+
+/* ---------- navigation ---------- */
+$("tile-studio").onclick = () => { show("studio"); loadCount(); };
+document.querySelectorAll(".js-go-hub").forEach(b => b.onclick = () => show("hub"));
+document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = () => { show("studio"); loadCount(); });
+$("add-item").onclick = () => show("add");
+
+/* ---------- studio home ---------- */
+async function loadCount(){
+  const { count, error } = await sb.from("studio_items").select("id", { count: "exact", head: true });
+  if(error){ $("item-count").textContent = ""; console.error(error); return; }
+  $("item-count").textContent = count === 1 ? "1 item" : (count || 0) + " items";
+}
+
+/* these all get built in the next steps */
+const soon = () => toast("Coming soon ✨");
+["tile-glazes","tile-combos","tile-clay","tile-tools","tile-search",
+ "choose-glaze","choose-combo","choose-clay","choose-tool"].forEach(id => $(id).onclick = soon);
+
+/* ---------- start-up: keep her logged in ---------- */
+function onlyIfOnLoginOrLoading(){
+  return $("screen-login").classList.contains("active") || $("screen-loading").classList.contains("active");
+}
+sb.auth.onAuthStateChange((_event, session) => {
+  if(!session) show("login");
+  else if(onlyIfOnLoginOrLoading()) show("hub");
+});
+sb.auth.getSession().then(({ data }) => {
+  if(!data.session) show("login");
+  else if(onlyIfOnLoginOrLoading()) show("hub");
+});
+</script>
+</body>
+</html>
