@@ -242,8 +242,15 @@
 <!-- =============== STUDIO HOME =============== -->
 <div id="screen-studio" class="screen">
   <div class="top-bar">
-    <button id="logout-btn" class="pill">Log out</button>
+    <button id="menu-btn" class="pill" aria-label="Menu" style="min-width:64px;padding:0 18px">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
     <span id="item-count" class="count"></span>
+  </div>
+
+  <div id="menu" class="panel" hidden>
+    <button id="backup-btn" class="chip" style="min-height:64px;font-size:20px">Download a backup</button>
+    <button id="logout-btn" class="chip" style="min-height:64px;font-size:20px">Log out</button>
   </div>
 
   <h1 class="logo small"><span class="name js-name"></span><span class="sub js-sub"></span></h1>
@@ -308,6 +315,20 @@
   <div id="ls-quick" style="display:flex;gap:10px;width:100%" hidden></div>
   <div id="ls-panel" class="panel" hidden></div>
   <div id="ls-grid" class="gl-grid"></div>
+</div>
+
+<!-- =============== SEARCH =============== -->
+<div id="screen-search" class="screen">
+  <div class="top-bar">
+    <button class="pill js-go-studio">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      Back
+    </button>
+    <span id="sr-count" class="count"></span>
+  </div>
+  <div class="h2" style="margin:0">Search everything</div>
+  <input id="sr-q" class="txt" type="search" placeholder="Try a name, colour, tag…" autocomplete="off">
+  <div id="sr-body" style="width:100%;display:flex;flex-direction:column;gap:10px"></div>
 </div>
 
 <!-- =============== GLAZE DETAIL =============== -->
@@ -514,7 +535,7 @@ async function refreshAll(){
 }
 
 /* ---------- home ---------- */
-function goHome(){ show("studio"); refreshAll(); if(!BRANDS.length) loadBrands(); }
+function goHome(){ show("studio"); $("menu").hidden = true; refreshAll(); if(!BRANDS.length) loadBrands(); }
 document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = goHome);
 $("add-item").onclick = () => show("add");
 function renderLately(){
@@ -525,7 +546,9 @@ function renderLately(){
 $("lately-row").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if(b) openDetail(b.dataset.id, { type: "studio" }); });
 
 const soon = () => toast("Coming soon ✨");
-["tile-search"].forEach(id => $(id).onclick = soon);
+$("tile-search").onclick = () => openSearch();
+$("menu-btn").onclick = () => { $("menu").hidden = !$("menu").hidden; };
+$("backup-btn").onclick = () => downloadBackup();
 $("tile-glazes").onclick = () => openList("glaze");
 $("tile-combos").onclick = () => openList("combo");
 $("tile-pieces").onclick = () => openList("work");
@@ -1135,7 +1158,7 @@ function renderDetail(id){
 }
 $("d-back").onclick = () => {
   if(DSTACK.length > 1){ DSTACK.pop(); renderDetail(DSTACK[DSTACK.length - 1]); return; }
-  if(DBASE.type === "list") openList(LIST.kind, LIST.preset); else goHome();
+  if(DBASE.type === "list") openList(LIST.kind, LIST.preset); else if(DBASE.type === "search"){ show("search"); renderSearch(); } else goHome();
 };
 function lrow(it, sub){
   const img = coverOf(it);
@@ -1234,6 +1257,67 @@ async function deleteItem(id){
   } catch(err){
     console.error(err); overlay(""); toast("Couldn't delete: " + ((err && err.message) || "try again"));
   }
+}
+
+/* =====================================================================
+   SEARCH EVERYTHING
+   ===================================================================== */
+const KIND_ORDER = [["work","Pieces"],["glaze","Glazes"],["combo","Glaze Combos"],["clay","Clay Bodies"],["tool","Tools"]];
+function searchText(it){
+  const d = it.details || {}, b = BRANDS.find(x => x.id === it.brand_id);
+  const rel = it.category === "work" ? linksOf(it.id).map(l => (byId(l.linked_id) || {}).name).concat([(byId(clayOf(it.id)) || {}).name])
+    : it.category === "combo" ? comboGlazes(it.id).map(id => (byId(id) || {}).name) : [];
+  return [it.name, it.colour, it.texture, (it.tags || []).join(" "), it.notes, b && b.name, d.fired_colour, d.type, d.location, d.clay,
+    d.cone === "low" ? "low fire cone 05 06" : d.cone === "mid" ? "mid fire cone 5 6" : "", d.status === "complete" ? "finished" : d.status === "in_progress" ? "in progress" : "", ...rel]
+    .filter(Boolean).join(" ").toLowerCase();
+}
+async function openSearch(){
+  $("sr-q").value = ""; show("search"); renderSearch();
+  if(!BRANDS.length) loadBrands().then(renderSearch);
+  await loadAll(); renderSearch();
+}
+function renderSearch(){
+  const words = $("sr-q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if(!words.length){ $("sr-count").textContent = ""; $("sr-body").innerHTML = `<div class="empty">Type to search everything in the studio.</div>`; return; }
+  const hits = ALL.filter(it => { const t = searchText(it); return words.every(w => t.includes(w)); });
+  $("sr-count").textContent = hits.length + (hits.length === 1 ? " result" : " results");
+  if(!hits.length){ $("sr-body").innerHTML = `<div class="empty">Nothing found. Try a different word.</div>`; return; }
+  $("sr-body").innerHTML = KIND_ORDER.map(([k, label]) => {
+    const list = hits.filter(i => i.category === k); if(!list.length) return "";
+    return `<h4 class="subhead">${label}</h4><div class="lrows">${list.map(i => lrow(i, "")).join("")}</div>`;
+  }).join("");
+}
+$("sr-q").addEventListener("input", renderSearch);
+$("sr-body").addEventListener("click", (e) => { const b = e.target.closest("[data-act=open]"); if(b) openDetail(b.dataset.id, { type: "search" }); });
+
+/* =====================================================================
+   BACKUP: one spreadsheet (CSV) with everything
+   ===================================================================== */
+async function downloadBackup(){
+  $("menu").hidden = true; overlay("Preparing your backup…");
+  try {
+    await Promise.all([loadAll(), loadBrands()]);
+    const cell = (v) => { const s = String(v == null ? "" : v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const head = ["Type","Name","Brand","Firing","Colour (jar / clay)","Colour after firing","Texture","Kind of tool","Kept in","Status","Made with / layers","Clay","Tags","Notes","Photo links","Added"];
+    const typeName = { work: "Piece", glaze: "Glaze", combo: "Glaze combo", clay: "Clay body", tool: "Tool" };
+    const rows = [];
+    KIND_ORDER.forEach(([k]) => items(k).slice().reverse().forEach(it => {
+      const d = it.details || {}, b = BRANDS.find(x => x.id === it.brand_id);
+      const madeWith = it.category === "work"
+        ? linksOf(it.id).map(l => ((byId(l.linked_id) || {}).name || "?") + (applySummary(l) ? " (" + applySummary(l) + ")" : "")).join("; ")
+        : it.category === "combo" ? comboGlazes(it.id).map(id => (byId(id) || {}).name).filter(Boolean).join(" + ") : "";
+      rows.push([typeName[k], it.name, b ? b.name : "", coneLabel(d.cone), it.colour, d.fired_colour, it.texture, d.type, d.location,
+        it.category === "work" ? (d.status === "complete" ? "Finished" : "In progress") : "", madeWith,
+        it.category === "work" ? ((byId(clayOf(it.id)) || {}).name || d.clay || "") : "",
+        (it.tags || []).join("; "), it.notes, photosOf(it).map(p => photoUrl(p.path)).join(" "), (it.created_at || "").slice(0, 10)]);
+    }));
+    const csv = "\uFEFF" + [head, ...rows].map(r => r.map(cell).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+    a.download = "studio-backup-" + new Date().toISOString().slice(0, 10) + ".csv";
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    overlay(""); toast("Backup downloaded ✨");
+  } catch(err){ console.error(err); overlay(""); toast("Couldn't make the backup: " + ((err && err.message) || "try again")); }
 }
 
 /* ---------- start-up: keep her logged in ---------- */
