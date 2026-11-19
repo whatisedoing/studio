@@ -343,10 +343,8 @@ const soon = () => toast("Coming soon ✨");
 /* =====================================================================
    ADD GLAZE — one question per screen
    ===================================================================== */
-const STEPS = ["photos","name","brand","cone","application","coats","colour","texture","tags","notes"];
-const CONES   = [{v:"low", t:"Low fire",  h:"Cone 05/06"}, {v:"high", t:"High fire", h:"Cone 5/6"}];
-const APPS    = [{v:"dip", t:"Dip"}, {v:"spray", t:"Spray"}, {v:"other", t:"Other"}];
-const COATS   = [1, 2, 3, 4];
+const STEPS = ["photos","name","brand","cone","colour","firedcolour","texture","tags","notes"];
+const CONES   = [{v:"low", t:"Low fire",  h:"Cone 05/06"}, {v:"mid", t:"Mid fire", h:"Cone 5/6"}];
 const COLOURS = [
   ["Red","#C62828"],["Orange","#EF6C00"],["Yellow","#F9C82E"],["Green","#2E8B57"],
   ["Blue","#1F5FA8"],["Purple","#6B2F8F"],["Pink","#E8579A"],["Brown","#7B4A2A"],
@@ -373,9 +371,9 @@ let G = null, RESUME = null, BRANDS = [], KNOWN_TAGS = [], brandFormOpen = false
 function newGlaze(){
   const last = lsGet(LAST_KEY) || {};
   const g = { id: uuid(), step: 0, photos: {jar:[], fired:[]}, name:"", brandId: last.brandId || null,
-    cone: last.cone || null, application: last.application || null, applicationNote:"", coats: last.coats || null,
-    colour: null, textures: [], tags: [], notes:"", itemSaved:false, same:{} };
-  ["brandId","cone","application","coats"].forEach(k => { if(g[k]) g.same[k] = true; });
+    cone: (last.cone === "low" || last.cone === "mid") ? last.cone : null,
+    colour: null, firedColour: null, textures: [], tags: [], notes:"", itemSaved:false, same:{} };
+  ["brandId","cone"].forEach(k => { if(g[k]) g.same[k] = true; });
   return g;
 }
 function saveDraft(){
@@ -428,7 +426,7 @@ function render(){
 }
 function hasValue(step){
   return {photos: G.photos.jar.length + G.photos.fired.length > 0, name: !!G.name.trim(), brand: !!G.brandId, cone: !!G.cone,
-    application: !!G.application, coats: !!G.coats, colour: !!G.colour, texture: G.textures.length > 0,
+    colour: !!G.colour, firedcolour: !!G.firedColour, texture: G.textures.length > 0,
     tags: G.tags.length > 0, notes: !!G.notes.trim()}[step];
 }
 const title = (t, sub) => `<h2 class="g-title">${t}</h2>${sub ? `<p class="g-sub">${sub}</p>` : ""}`;
@@ -475,15 +473,11 @@ const BODIES = {
   cone: () => `${title("Which firing?")}${sameNote("cone")}` +
     CONES.map(c => `<button class="opt ${G.cone === c.v ? "on" : ""}" data-act="pick" data-key="cone" data-val="${c.v}">${c.t}<span class="hint">${c.h}</span></button>`).join(""),
 
-  application: () => `${title("How do you apply it?")}${sameNote("application")}` +
-    APPS.map(a => `<button class="opt ${G.application === a.v ? "on" : ""}" data-act="pick" data-key="application" data-val="${a.v}">${a.t}</button>`).join("") +
-    (G.application === "other" ? `<input id="g-appnote" class="txt" type="text" placeholder="What kind? (optional)" value="${esc(G.applicationNote)}">` : ""),
-
-  coats: () => `${title("How many coats?")}${sameNote("coats")}
-    <div class="coat-grid">${COATS.map(n => `<button class="opt ${G.coats === n ? "on" : ""}" data-act="pick" data-key="coats" data-val="${n}">${n === 4 ? "4+" : n}</button>`).join("")}</div>`,
-
-  colour: () => `${title("What colour is it?")}
+  colour: () => `${title("What colour is it in the jar?")}
     <div class="sw-grid">${COLOURS.map(([n, c]) => `<button class="sw ${G.colour === n ? "on" : ""}" data-act="pick" data-key="colour" data-val="${n}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`,
+
+  firedcolour: () => `${title("What colour is it after firing?")}
+    <div class="sw-grid">${COLOURS.map(([n, c]) => `<button class="sw ${G.firedColour === n ? "on" : ""}" data-act="pick" data-key="firedColour" data-val="${n}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`,
 
   texture: () => `${title("What's it like?", "Pick as many as you like")}
     <div class="chips">${TEXTURES.map(t => `<button class="chip ${G.textures.includes(t) ? "on" : ""}" data-act="multi" data-key="textures" data-val="${t}">${t}</button>`).join("")}</div>`,
@@ -530,9 +524,9 @@ $("g-body").addEventListener("click", async (e) => {
   const el = e.target.closest("[data-act]"); if(!el) return;
   const act = el.dataset.act, key = el.dataset.key, val = el.dataset.val;
   if(act === "pick"){
-    G[key] = (key === "coats") ? Number(val) : val; if(G.same) G.same[key] = false;
+    G[key] = val; if(G.same) G.same[key] = false;
     saveDraft(); render();
-    if(!(key === "application" && val === "other")) setTimeout(() => { if(G.step !== "done") next(); }, 260);
+    setTimeout(() => { if(G.step !== "done") next(); }, 260);
   } else if(act === "multi"){
     const arr = G[key], i = arr.indexOf(val); if(i >= 0) arr.splice(i, 1); else arr.push(val);
     saveDraft(); render();
@@ -552,7 +546,9 @@ $("g-body").addEventListener("click", async (e) => {
   } else if(act === "rm"){
     const arr = G.photos[el.dataset.kind]; URL.revokeObjectURL(arr[Number(el.dataset.i)].url); arr.splice(Number(el.dataset.i), 1); render();
   } else if(act === "resume-yes"){
-    const { step, ...rest } = RESUME; Object.assign(G, rest); G.id = RESUME.id; G.step = (typeof step === "number" ? step : 1); G.same = {}; render();
+    const { step, ...rest } = RESUME; Object.assign(G, rest); G.id = RESUME.id; G.step = (typeof step === "number" ? Math.min(step, STEPS.length - 1) : 1); G.same = {};
+    if(G.cone === "high") G.cone = "mid";
+    render();
   } else if(act === "resume-no"){
     lsDel(DRAFT_KEY); G = newGlaze(); render();
   } else if(act === "again"){
@@ -564,7 +560,6 @@ $("g-body").addEventListener("click", async (e) => {
 $("g-body").addEventListener("input", (e) => {
   if(e.target.id === "g-name"){ G.name = e.target.value; $("g-savenow").hidden = !G.name.trim(); }
   else if(e.target.id === "g-note") G.notes = e.target.value;
-  else if(e.target.id === "g-appnote") G.applicationNote = e.target.value;
   saveDraft();
 });
 $("g-body").addEventListener("keydown", (e) => {
@@ -582,7 +577,7 @@ async function addBrand(name, website){
   const found = BRANDS.find(b => b.name.toLowerCase() === name.toLowerCase());
   if(found){ G.brandId = found.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render(); return; }
   const { data, error } = await sb.from("studio_brands").insert({ name, website: website || null }).select("id,name,website").single();
-  if(error){ console.error(error); toast("Couldn't add that brand. Try again."); return; }
+  if(error){ console.error(error); toast("Couldn't add that brand: " + (error.message || "try again")); return; }
   BRANDS.push(data); BRANDS.sort((a,b) => a.name.localeCompare(b.name));
   G.brandId = data.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render();
 }
@@ -618,8 +613,7 @@ async function saveGlaze(){
   try {
     const { data: u } = await sb.auth.getUser(); const uid = u.user.id;
     if(!G.itemSaved){
-      const details = { cone: G.cone, application: G.application, coats: G.coats };
-      if(G.application === "other" && G.applicationNote.trim()) details.application_note = G.applicationNote.trim();
+      const details = { cone: G.cone, fired_colour: G.firedColour };
       Object.keys(details).forEach(k => details[k] == null && delete details[k]);
       const { error } = await sb.from("studio_items").insert({
         id: G.id, category: "glaze", name: G.name.trim(), brand_id: G.brandId, colour: G.colour,
@@ -643,11 +637,11 @@ async function saveGlaze(){
     }
     overlay("");
     if(failed){ toast(failed + (failed === 1 ? " photo" : " photos") + " didn't upload. Tap Save again to retry."); return; }
-    lsSet(LAST_KEY, { brandId: G.brandId, cone: G.cone, application: G.application, coats: G.coats });
+    lsSet(LAST_KEY, { brandId: G.brandId, cone: G.cone });
     lsDel(DRAFT_KEY);
     G.step = "done"; render();
   } catch(err){
-    console.error(err); overlay(""); toast("Couldn't save. Check your connection and try again.");
+    console.error(err); overlay(""); toast("Couldn't save: " + ((err && err.message) || "check your connection") );
   }
 }
 
