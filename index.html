@@ -191,6 +191,24 @@
     opacity:0;pointer-events:none;transition:all .25s;max-width:90vw;text-align:center;z-index:50}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .loading{color:var(--teal);font-size:22px;margin-top:35vh}
+  .subhead{margin:6px 0 0;font-size:20px;color:var(--burgundy);width:100%}
+  .lrows{width:100%;display:flex;flex-direction:column;gap:10px}
+  .lrow{appearance:none;font:inherit;width:100%;min-height:80px;border-radius:20px;background:#fff;border:3px solid var(--teal);display:flex;align-items:center;gap:12px;padding:8px 14px 8px 8px;cursor:pointer;text-align:left;color:var(--ink)}
+  .lrow:active{transform:translateY(3px)}
+  .lth{width:60px;height:60px;border-radius:14px;background:#EFE2D0;overflow:hidden;flex:none}
+  .lth img{width:100%;height:100%;object-fit:cover;display:block}
+  .ltx{flex:1;min-width:0;display:flex;flex-direction:column}
+  .ln{font-weight:800;font-size:20px}.ls{font-size:16px;color:#6b5a62}
+  .chev{font-size:30px;color:var(--teal);font-weight:800}
+  .pickcard{position:relative}
+  .pickcard.on{outline:5px solid var(--pink);outline-offset:-5px}
+  .pickcard .ph{position:relative}
+  .badgenum{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;background:var(--pink);color:#fff;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center}
+  .badge.st-wip{background:var(--honey)}.badge.st-done{background:var(--mint)}
+  .done-wrap{display:flex;flex-direction:column;gap:14px;align-items:center;width:100%}
+  .done-img{width:160px;height:160px;object-fit:cover;border-radius:20px;border:3px solid var(--teal)}
+  .done-name{font-size:24px;font-weight:800;text-align:center}
+  .erow .el{flex:0 1 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -274,23 +292,24 @@
   </div>
 </div>
 
-<!-- =============== MY GLAZES (list) =============== -->
-<div id="screen-glazes" class="screen">
+<!-- =============== LIST (glazes / combos / works) =============== -->
+<div id="screen-list" class="screen">
   <div class="top-bar">
     <button class="pill js-go-studio">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F5F6E" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
       Back
     </button>
-    <span id="gl-count" class="count"></span>
+    <span id="ls-count" class="count"></span>
   </div>
-  <div class="h2" style="margin:0">My Glazes</div>
-  <input id="gl-q" class="txt" type="search" placeholder="Search by name" autocomplete="off">
+  <div id="ls-title" class="h2" style="margin:0">My Glazes</div>
+  <button id="ls-add" class="tile pinkt" style="min-height:76px;font-size:24px">+ Add</button>
+  <input id="ls-q" class="txt" type="search" placeholder="Search by name" autocomplete="off">
   <div style="display:flex;gap:10px;width:100%">
-    <button id="gl-filter-btn" class="chip" style="flex:1">Filters</button>
-    <button id="gl-clear" class="chip dashed" hidden>Clear</button>
+    <button id="ls-filter-btn" class="chip" style="flex:1">Filters</button>
+    <button id="ls-clear" class="chip dashed" hidden>Clear</button>
   </div>
-  <div id="gl-panel" class="panel" hidden></div>
-  <div id="gl-grid" class="gl-grid"></div>
+  <div id="ls-panel" class="panel" hidden></div>
+  <div id="ls-grid" class="gl-grid"></div>
 </div>
 
 <!-- =============== GLAZE DETAIL =============== -->
@@ -358,7 +377,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* =====================================================================
-   SETTINGS — the only part you need to edit
+   SETTINGS
    ===================================================================== */
 const SUPABASE_URL = "https://prdylxlscsmsndxrwzpk.supabase.co";
 const SUPABASE_KEY = "sb_publishable_nXCSUQXO1kClzVR4l4l1kQ_pAokhVV4";
@@ -381,13 +400,20 @@ function show(name){
 let toastTimer;
 function toast(msg){
   const t = $("toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 3200);
 }
+function overlay(msg){ $("overlay-text").textContent = msg || ""; $("overlay").classList.toggle("show", !!msg); }
+
+/* ---------- small helpers ---------- */
+const lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const lsDel = (k) => { try { localStorage.removeItem(k); } catch(e){} };
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16); });
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
 /* ---------- login ---------- */
-$("pw-toggle").onclick = () => {
-  const p = $("password"); p.type = p.type === "password" ? "text" : "password";
-};
+$("pw-toggle").onclick = () => { const p = $("password"); p.type = p.type === "password" ? "text" : "password"; };
 async function doLogin(){
   $("login-error").textContent = "";
   const email = $("email").value.trim(), password = $("password").value;
@@ -401,27 +427,9 @@ $("login-btn").onclick = doLogin;
 $("password").addEventListener("keydown", e => { if(e.key === "Enter") doLogin(); });
 $("logout-btn").onclick = async () => { await sb.auth.signOut(); };
 
-/* ---------- navigation ---------- */
-function goHome(){ show("studio"); loadCount(); refreshGlazes(); }
-document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = goHome);
-$("add-item").onclick = () => show("add");
-
-/* ---------- studio home ---------- */
-async function loadCount(){
-  const { count, error } = await sb.from("studio_items").select("id", { count: "exact", head: true });
-  if(error){ $("item-count").textContent = ""; console.error(error); return; }
-  $("item-count").textContent = count === 1 ? "1 item" : (count || 0) + " items";
-}
-
-/* these all get built in the next steps */
-const soon = () => toast("Coming soon ✨");
-["tile-wip","tile-done","tile-combos","tile-clay","tile-tools","tile-search",
- "choose-work","choose-combo","choose-clay","choose-tool"].forEach(id => $(id).onclick = soon);
-
 /* =====================================================================
-   ADD GLAZE — one question per screen
+   CONSTANTS
    ===================================================================== */
-const STEPS = ["photos","name","brand","cone","colour","firedcolour","texture","tags"];
 const CONES   = [{v:"low", t:"Low fire",  h:"Cone 05/06"}, {v:"mid", t:"Mid fire", h:"Cone 5/6"}];
 const COLOURS = [
   ["Red","#C62828"],["Orange","#EF6C00"],["Yellow","#F9C82E"],["Green","#2E8B57"],
@@ -429,86 +437,160 @@ const COLOURS = [
   ["Grey","#8A8F98"],["Black","#1B1B1B"],["White","#F4F1EA"],["Clear","repeating-linear-gradient(45deg,#fff 0 6px,#d8e6ea 6px 12px)"]
 ];
 const TEXTURES = ["Glossy","Satin","Matte","Speckled","Crackle","Textured"];
-const STARTER_TAGS = ["Favourite","Layers well","Runs","Test again","Food safe"];
+const APPLICATIONS = [{v:"dip", t:"Dip"}, {v:"paint", t:"Paint"}, {v:"spray", t:"Spray"}, {v:"other", t:"Other"}];
+const COATS = [1, 2, 3, 4];
+const STARTER_TAGS = {
+  glaze: ["Favourite","Layers well","Runs","Test again","Food safe"],
+  combo: ["Favourite","Reliable","Surprising","Test again"],
+  work:  ["Mug","Bowl","Plate","Vase","Planter","Gift","For sale","Experiment"]
+};
 const COMMON_BRANDS = [
   {name:"Amaco", website:"https://www.amaco.com"}, {name:"Mayco", website:"https://www.maycocolors.com"},
   {name:"Spectrum", website:"https://www.spectrumglazes.com"}, {name:"Duncan", website:"https://www.duncanceramics.com"},
   {name:"Coyote", website:"https://www.coyoteclay.com"}, {name:"Laguna", website:"https://www.lagunaclay.com"}
 ];
-const LAST_KEY = "studioLastGlaze", DRAFT_KEY = "studioGlazeDraft";
+const PHOTO_KEYS = { glaze: ["jar","fired"], combo: ["combo"], work: ["main"] };
+const NOUN = { glaze: "glaze", combo: "combo", work: "work" };
+const LAST_KEY = "studioLastGlaze", DRAFT_KEY = "studioGlazeDraft", LAST_APPLY = "studioLastApply";
 
-const lsGet = (k) => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
-const lsDel = (k) => { try { localStorage.removeItem(k); } catch(e){} };
-const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-  : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c==="x"?r:(r&3|8)).toString(16); });
-const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-
-let G = null, RESUME = null, BRANDS = [], KNOWN_TAGS = [], brandFormOpen = false, pendingKind = "jar";
-
-function newGlaze(){
-  const last = lsGet(LAST_KEY) || {};
-  const g = { id: uuid(), step: 0, photos: {jar:[], fired:[]}, name:"", brandId: last.brandId || null,
-    cone: (last.cone === "low" || last.cone === "mid") ? last.cone : null,
-    colour: null, firedColour: null, textures: [], tags: [], notes:"", itemSaved:false, same:{},
-    editing:false, editReturn:false, removed:[], dirty:false, detailsBase:{} };
-  ["brandId","cone"].forEach(k => { if(g[k]) g.same[k] = true; });
-  return g;
-}
-function saveDraft(){
-  if(!G || G.step === "done") return;
-  if(G.editing){ G.dirty = true; return; }
-  const { photos, itemSaved, same, editing, editReturn, removed, dirty, detailsBase, ...rest } = G;
-  lsSet(DRAFT_KEY, rest);
-}
-
-async function startGlaze(){
-  const draft = lsGet(DRAFT_KEY);
-  G = newGlaze();
-  if(draft && draft.name && draft.name.trim()){ RESUME = draft; G.step = "resume"; } else { RESUME = null; }
-  brandFormOpen = false;
-  show("glaze"); render();
-  loadBrands(); loadTags();
-}
-async function loadBrands(){
-  const { data, error } = await sb.from("studio_brands").select("id,name,website").order("name");
-  if(error){ console.error(error); return; }
-  BRANDS = data || []; if(G && STEPS[G.step] === "brand") render();
-}
-async function loadTags(){
-  const { data, error } = await sb.from("studio_items").select("tags").eq("category","glaze");
-  if(error){ console.error(error); return; }
-  const n = {}; (data || []).forEach(r => (r.tags || []).forEach(t => n[t] = (n[t] || 0) + 1));
-  KNOWN_TAGS = Object.keys(n).sort((a,b) => n[b] - n[a]);
-  if(G && STEPS[G.step] === "tags") render();
-}
+const colourHex = (n) => (COLOURS.find(c => c[0] === n) || [])[1] || "#ccc";
+const coneLabel = (v) => v === "low" ? "Low fire · cone 05/06" : v === "mid" ? "Mid fire · cone 5/6" : "";
+const appLabel = (v) => (APPLICATIONS.find(a => a.v === v) || {}).t || "";
+const photoUrl = (path) => sb.storage.from("studio-photos").getPublicUrl(path).data.publicUrl;
 function brandLink(b){
   if(b.website){ return /^https?:\/\//i.test(b.website) ? b.website : "https://" + b.website; }
   return "https://www.google.com/search?q=" + encodeURIComponent(b.name + " glaze");
 }
 
-/* ---------- drawing each screen ---------- */
-function render(){
-  const s = G.step;
-  const name = (typeof s === "string") ? s : STEPS[s];
-  const isNum = typeof s === "number";
-  $("g-back").hidden = (s === "done");
-  $("g-savenow").hidden = !(isNum && !G.editing && s >= 1 && s < STEPS.length - 1 && G.name.trim());
-  $("g-dots").innerHTML = (isNum && !G.editReturn) ? STEPS.map((_, i) => `<i class="${i < s ? "done" : i === s ? "cur" : ""}"></i>`).join("") : "";
-  const nextBtn = $("g-next");
-  nextBtn.hidden = !isNum;
-  if(isNum){
-    if(G.editReturn) nextBtn.textContent = "Done";
-    else if(name === "tags") nextBtn.textContent = "Save glaze";
-    else nextBtn.textContent = hasValue(name) ? "Next" : (name === "name" ? "Next" : "Skip");
+/* =====================================================================
+   DATA: everything she owns, loaded in one go (it's small)
+   ===================================================================== */
+let ALL = [], LINKS = [], CG = [], BRANDS = [];
+const items = (cat) => ALL.filter(i => i.category === cat);
+const byId = (id) => ALL.find(i => i.id === id);
+const photosOf = (it) => (it.studio_photos || []).slice().sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
+function coverOf(it){
+  const ps = photosOf(it);
+  for(const k of ["fired","combo","main","jar"]){ const p = ps.find(x => x.kind === k); if(p) return photoUrl(p.path); }
+  return ps[0] ? photoUrl(ps[0].path) : null;
+}
+const linksOf = (workId) => LINKS.filter(l => l.item_id === workId).sort((a,b) => (a.sort_order||0) - (b.sort_order||0));
+const comboGlazes = (comboId) => CG.filter(r => r.combo_id === comboId).sort((a,b) => a.layer_order - b.layer_order).map(r => r.glaze_id);
+function usedIn(id){
+  const combos = CG.filter(r => r.glaze_id === id).map(r => byId(r.combo_id));
+  const works = LINKS.filter(l => l.linked_id === id).map(l => byId(l.item_id));
+  return [...new Set([...combos, ...works].filter(Boolean))];
+}
+function knownTags(kind){
+  const n = {}; items(kind).forEach(i => (i.tags || []).forEach(t => n[t] = (n[t] || 0) + 1));
+  return Object.keys(n).sort((a,b) => n[b] - n[a]);
+}
+function knownClays(){ return [...new Set(items("work").map(w => (w.details || {}).clay).filter(Boolean))]; }
+
+async function loadAll(){
+  const [a, l, c] = await Promise.all([
+    sb.from("studio_items").select("id,category,name,brand_id,colour,texture,tags,notes,details,created_at,studio_photos(id,kind,path,created_at)").order("created_at", { ascending: false }),
+    sb.from("studio_links").select("id,item_id,linked_id,role,application,coats,sort_order"),
+    sb.from("studio_combo_glazes").select("id,combo_id,glaze_id,layer_order")
+  ]);
+  const err = a.error || l.error || c.error;
+  if(err){ console.error(err); toast("Couldn't load: " + (err.message || "try again")); return false; }
+  ALL = a.data || []; LINKS = l.data || []; CG = c.data || [];
+  return true;
+}
+async function loadBrands(){
+  const { data, error } = await sb.from("studio_brands").select("id,name,website").order("name");
+  if(error){ console.error(error); return; }
+  BRANDS = data || [];
+  if(G && typeof G.step === "number" && stepsOf(G)[G.step] === "brand") render();
+}
+async function refreshAll(){
+  if(await loadAll()){ renderLately(); $("item-count").textContent = ALL.length === 1 ? "1 item" : ALL.length + " items"; }
+}
+
+/* ---------- home ---------- */
+function goHome(){ show("studio"); refreshAll(); if(!BRANDS.length) loadBrands(); }
+document.querySelectorAll(".js-go-studio").forEach(b => b.onclick = goHome);
+$("add-item").onclick = () => show("add");
+function renderLately(){
+  const list = ALL.filter(i => coverOf(i)).slice(0, 4);
+  $("lately").hidden = !list.length;
+  $("lately-row").innerHTML = list.map(i => `<button data-id="${i.id}"><div class="lt"><img src="${coverOf(i)}" alt=""></div><span>${esc(i.name)}</span></button>`).join("");
+}
+$("lately-row").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if(b) openDetail(b.dataset.id, { type: "studio" }); });
+
+const soon = () => toast("Coming soon ✨");
+["tile-clay","tile-tools","tile-search","choose-clay","choose-tool"].forEach(id => $(id).onclick = soon);
+$("tile-glazes").onclick = () => openList("glaze");
+$("tile-combos").onclick = () => openList("combo");
+$("tile-wip").onclick    = () => openList("work", { status: "in_progress" });
+$("tile-done").onclick   = () => openList("work", { status: "complete" });
+$("choose-glaze").onclick = () => startNew("glaze", "add");
+$("choose-combo").onclick = () => startNew("combo", "add");
+$("choose-work").onclick  = () => startNew("work", "add");
+
+/* =====================================================================
+   THE STEP-BY-STEP SCREENS (add + edit, for glazes, combos and works)
+   ===================================================================== */
+let G = null, RESUME = null, brandFormOpen = false, pendingKind = "jar";
+
+function stepsOf(g){
+  if(g.kind === "glaze") return ["photos","name","brand","cone","colour","firedcolour","texture","tags"];
+  if(g.kind === "combo") return ["comboglazes","photos","name","tags"];
+  return ["photos","name","status","worklinks", ...g.links.map((_, i) => "apply" + i), "clay","tags"];
+}
+function newItem(kind){
+  const last = lsGet(LAST_KEY) || {};
+  const g = { kind, id: uuid(), step: 0, backTo: "add", photos: {}, name: "", nameEdited: false, brandId: null, cone: null,
+    colour: null, firedColour: null, textures: [], tags: [], notes: "", cglazes: [], links: [], status: "in_progress", clay: "",
+    itemSaved: false, relDone: false, same: {}, editing: false, editReturn: false, removed: [], dirty: false, detailsBase: {} };
+  PHOTO_KEYS[kind].forEach(k => g.photos[k] = []);
+  if(kind === "glaze"){
+    g.brandId = last.brandId || null; g.cone = (last.cone === "low" || last.cone === "mid") ? last.cone : null;
+    ["brandId","cone"].forEach(k => { if(g[k]) g.same[k] = true; });
   }
-  $("g-body").innerHTML = BODIES[name]();
-  window.scrollTo(0,0);
+  return g;
+}
+function saveDraft(){
+  if(!G || G.step === "done") return;
+  if(G.editing){ G.dirty = true; return; }
+  if(G.kind !== "glaze") return;
+  lsSet(DRAFT_KEY, { id: G.id, step: G.step, name: G.name, brandId: G.brandId, cone: G.cone, colour: G.colour,
+    firedColour: G.firedColour, textures: G.textures, tags: G.tags, notes: G.notes });
+}
+function startNew(kind, backTo){
+  const draft = kind === "glaze" ? lsGet(DRAFT_KEY) : null;
+  G = newItem(kind); G.backTo = backTo || "add";
+  if(draft && draft.name && draft.name.trim()){ RESUME = draft; G.step = "resume"; } else { RESUME = null; }
+  brandFormOpen = false; show("glaze"); render();
+  if(kind === "glaze" && !BRANDS.length) loadBrands();
+  loadAll().then(() => { if(G && $("screen-glaze").classList.contains("active")) render(true); });
+}
+
+/* ---------- drawing a screen ---------- */
+function render(keepScroll){
+  const s = G.step, steps = stepsOf(G);
+  const name = (typeof s === "string") ? s : steps[s];
+  const isNum = typeof s === "number";
+  const nameIdx = steps.indexOf("name");
+  $("g-back").hidden = (s === "done");
+  $("g-savenow").hidden = !(isNum && !G.editing && s >= nameIdx && s < steps.length - 1 && G.name.trim());
+  $("g-dots").innerHTML = (isNum && !G.editReturn) ? steps.map((_, i) => `<i class="${i < s ? "done" : i === s ? "cur" : ""}"></i>`).join("") : "";
+  $("g-next").hidden = !isNum;
+  if(isNum) $("g-next").textContent = nextLabel(name, s === steps.length - 1);
+  $("g-body").innerHTML = bodyFor(name);
+  if(!keepScroll) window.scrollTo(0,0);
+}
+function nextLabel(name, isLast){
+  if(G.editReturn) return "Done";
+  if(isLast) return "Save " + NOUN[G.kind];
+  return hasValue(name) ? "Next" : "Skip";
 }
 function hasValue(step){
-  return {photos: G.photos.jar.length + G.photos.fired.length > 0, name: !!G.name.trim(), brand: !!G.brandId, cone: !!G.cone,
-    colour: !!G.colour, firedcolour: !!G.firedColour, texture: G.textures.length > 0,
-    tags: G.tags.length > 0, notes: !!G.notes.trim()}[step];
+  if(step.startsWith("apply")){ const l = G.links[Number(step.slice(5))]; return !!(l && (l.application || l.coats)); }
+  return ({ photos: Object.values(G.photos).some(a => a.length), name: true, brand: !!G.brandId, cone: !!G.cone,
+    colour: !!G.colour, firedcolour: !!G.firedColour, texture: G.textures.length > 0, tags: true,
+    comboglazes: true, status: true, worklinks: G.links.length > 0, clay: !!G.clay })[step];
 }
 const title = (t, sub) => `<h2 class="g-title">${t}</h2>${sub ? `<p class="g-sub">${sub}</p>` : ""}`;
 const sameNote = (k) => G.same[k] ? `<p class="g-same">Same as last time. Tap to keep it.</p>` : "";
@@ -522,18 +604,37 @@ function photoCard(kind, heading, hint){
     <div class="btnrow"><button class="chip" data-act="cam" data-kind="${kind}">Take photo</button>
     <button class="chip" data-act="lib" data-kind="${kind}">From library</button></div></div>`;
 }
+function pickGrid(list, order){
+  if(!list.length) return `<p class="g-sub">Nothing here yet.</p>`;
+  return `<div class="gl-grid pick-grid">${list.map(it => {
+    const n = order.indexOf(it.id) + 1, img = coverOf(it);
+    return `<button class="gcard pickcard ${n ? "on" : ""}" data-act="togglepick" data-id="${it.id}" data-name="${esc(it.name.toLowerCase())}">
+      <div class="ph">${img ? `<img src="${img}" alt="" loading="lazy">` : "No photo"}<span class="badgenum" ${n ? "" : "hidden"}>${n || ""}</span></div>
+      <div class="meta"><div class="nm">${esc(it.name)}</div></div></button>`;
+  }).join("")}</div>`;
+}
+const pickOrder = () => G.kind === "combo" ? G.cglazes : G.links.map(l => l.id);
 
 const BODIES = {
   resume: () => `${title("Welcome back!", "You didn't finish this one")}
     <button class="opt" data-act="resume-yes">Continue “${esc(RESUME ? RESUME.name : "")}”</button>
     <button class="opt" data-act="resume-no">Start a new glaze</button>`,
 
-  photos: () => `${title("Photos", "Totally optional. You can add more later.")}
-    ${photoCard("jar", "The jar or a swatch", "No photo yet")}
-    ${photoCard("fired", "A fired example", "No photo yet")}`,
+  photos: () => {
+    if(G.kind === "glaze") return `${title("Photos", "Totally optional. You can add more later.")}
+      ${photoCard("jar", "The jar or a swatch", "No photo yet")}${photoCard("fired", "A fired example", "No photo yet")}`;
+    if(G.kind === "combo") return `${title("Photos", "What does the combo look like fired?")}${photoCard("combo", "Photos of the combo", "No photo yet")}`;
+    return `${title("Photos", "The piece as it is right now")}${photoCard("main", "Photos of the piece", "No photo yet")}`;
+  },
 
-  name: () => `${title("What's it called?")}
-    <input id="g-name" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="e.g. Celadon Blue" value="${esc(G.name)}">`,
+  name: () => {
+    if(G.kind === "combo" && !G.name.trim() && !G.nameEdited && G.cglazes.length){
+      G.name = G.cglazes.map(id => (byId(id) || {}).name).filter(Boolean).join(" + ");
+    }
+    const ph = { glaze: "e.g. Celadon Blue", combo: "e.g. Blue over honey", work: "e.g. Tall mug" }[G.kind];
+    return `${title(G.kind === "work" ? "What's it called?" : "What's it called?")}
+      <input id="g-name" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="${ph}" value="${esc(G.name)}">`;
+  },
 
   brand: () => {
     const sel = BRANDS.find(b => b.id === G.brandId);
@@ -563,8 +664,30 @@ const BODIES = {
   texture: () => `${title("What's it like?", "Pick as many as you like")}
     <div class="chips">${TEXTURES.map(t => `<button class="chip ${G.textures.includes(t) ? "on" : ""}" data-act="multi" data-key="textures" data-val="${t}">${t}</button>`).join("")}</div>`,
 
+  comboglazes: () => `${title("Which glazes?", "Tap them in the order you put them on, bottom layer first.")}
+    <input id="pick-q" class="txt" type="search" placeholder="Search glazes" autocomplete="off">
+    ${pickGrid(items("glaze"), G.cglazes)}`,
+
+  status: () => `${title("Where is it at?")}
+    <button class="opt ${G.status === "in_progress" ? "on" : ""}" data-act="pick" data-key="status" data-val="in_progress">Still in progress</button>
+    <button class="opt ${G.status === "complete" ? "on" : ""}" data-act="pick" data-key="status" data-val="complete">Finished</button>`,
+
+  worklinks: () => `${title("What glazes did you use?", "Pick glazes and combos. You can skip this.")}
+    <input id="pick-q" class="txt" type="search" placeholder="Search" autocomplete="off">
+    ${items("combo").length ? `<h4 class="subhead">Combos</h4>${pickGrid(items("combo"), pickOrder())}` : ""}
+    ${items("glaze").length ? `<h4 class="subhead">Glazes</h4>${pickGrid(items("glaze"), pickOrder())}` : ""}`,
+
+  clay: () => {
+    const known = knownClays(); if(G.clay && !known.includes(G.clay)) known.push(G.clay);
+    return `${title("What clay did you use?", "Optional")}
+      <div class="chips">${known.map(c => `<button class="chip ${G.clay === c ? "on" : ""}" data-act="setclay" data-val="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      <div style="display:flex;gap:10px;width:100%"><input id="g-clay" class="txt" type="text" placeholder="Type a clay name" style="flex:1">
+      <button class="chip on" data-act="addclay" style="min-height:68px">Add</button></div>`;
+  },
+
   tags: () => {
-    const all = [...KNOWN_TAGS, ...STARTER_TAGS.filter(t => !KNOWN_TAGS.includes(t)), ...G.tags.filter(t => !KNOWN_TAGS.includes(t) && !STARTER_TAGS.includes(t))];
+    const kt = knownTags(G.kind), starters = STARTER_TAGS[G.kind];
+    const all = [...kt, ...starters.filter(t => !kt.includes(t)), ...G.tags.filter(t => !kt.includes(t) && !starters.includes(t))];
     return `${title("Tags & notes", "Tap tags to add them, or make up your own.")}
       <div class="chips">${all.map(t => `<button class="chip ${G.tags.includes(t) ? "on" : ""}" data-act="multi" data-key="tags" data-val="${esc(t)}">${esc(t)}</button>`).join("")}</div>
       <div style="display:flex;gap:10px;width:100%"><input id="g-tag" class="txt" type="text" placeholder="New tag" style="flex:1">
@@ -574,49 +697,72 @@ const BODIES = {
 
   editmenu: () => {
     const brand = BRANDS.find(b => b.id === G.brandId);
-    const photoN = G.photos.jar.length + G.photos.fired.length;
-    const rows = [
-      [0, "Photos", photoN ? photoN + (photoN === 1 ? " photo" : " photos") : ""],
-      [1, "Name", G.name], [2, "Brand", brand ? brand.name : ""], [3, "Firing", coneLabel(G.cone)],
-      [4, "Colour in the jar", G.colour], [5, "Colour after firing", G.firedColour],
-      [6, "Texture", G.textures.join(", ")], [7, "Tags & notes", G.tags.length ? G.tags.join(", ") : (G.notes ? "Notes" : "")]
-    ];
+    const photoN = Object.values(G.photos).reduce((n, a) => n + a.length, 0);
+    const P = ["photos", "Photos", photoN ? photoN + (photoN === 1 ? " photo" : " photos") : ""];
+    const T = ["tags", "Tags & notes", G.tags.length ? G.tags.join(", ") : (G.notes ? "Notes" : "")];
+    let rows;
+    if(G.kind === "glaze") rows = [P, ["name","Name",G.name], ["brand","Brand",brand ? brand.name : ""], ["cone","Firing",coneLabel(G.cone)],
+      ["colour","Colour in the jar",G.colour], ["firedcolour","Colour after firing",G.firedColour], ["texture","Texture",G.textures.join(", ")], T];
+    else if(G.kind === "combo") rows = [["comboglazes","Glazes",G.cglazes.map(id => (byId(id) || {}).name).filter(Boolean).join(" + ")], P, ["name","Name",G.name], T];
+    else rows = [P, ["name","Name",G.name], ["status","Status",G.status === "complete" ? "Finished" : "In progress"],
+      ["worklinks","Glazes & combos used",G.links.map(l => (byId(l.id) || {}).name).filter(Boolean).join(", ")],
+      ...G.links.map((l, i) => ["apply" + i, "How: " + ((byId(l.id) || {}).name || "?"), applySummary(l)]),
+      ["clay","Clay",G.clay], T];
     return `${title("Edit " + esc(G.name), "Tap anything to change it")}
-      ${rows.map(([i, l, v]) => `<button class="erow" data-act="editstep" data-i="${i}"><span class="el">${l}</span><span class="ev">${v ? esc(v) : "Not set"}</span></button>`).join("")}
+      ${rows.map(([s, l, v]) => `<button class="erow" data-act="editstep" data-step="${s}"><span class="el">${esc(l)}</span><span class="ev">${v ? esc(v) : "Not set"}</span></button>`).join("")}
       <button class="tile pinkt" data-act="saveedit" style="min-height:84px;font-size:28px;margin-top:6px">Save changes</button>`;
   },
 
   done: () => {
-    const img = G.photos.jar[0] || G.photos.fired[0];
+    const img = Object.values(G.photos).flat()[0];
     return `<div class="done-wrap">
       ${img ? `<img class="done-img" src="${img.url}" alt="">` : ""}
       ${title("Saved!")}<div class="done-name">${esc(G.name)}</div>
-      <button class="tile pinkt" data-act="again" style="min-height:92px;font-size:28px">Add another glaze</button>
+      <button class="tile pinkt" data-act="again" style="min-height:92px;font-size:28px">Add another ${NOUN[G.kind]}</button>
       <button class="pill" data-act="finish" style="min-height:64px;font-size:22px">All done</button></div>`;
   }
 };
+function applySummary(l){ return [appLabel(l.application), l.coats ? (l.coats === 4 ? "4+" : l.coats) + (l.coats === 1 ? " coat" : " coats") : ""].filter(Boolean).join(" · "); }
+function applyBody(i){
+  const l = G.links[i], it = byId(l.id) || { name: "?" };
+  if(!l.touched){
+    const prev = i > 0 ? G.links[i - 1] : lsGet(LAST_APPLY);
+    if(!l.application && !l.coats && prev && (prev.application || prev.coats)){ l.application = prev.application || null; l.coats = prev.coats || null; l.fromPrev = true; }
+    l.touched = true;
+  }
+  const img = coverOf(it);
+  return `${title(esc(it.name), "How did you use it on this piece?")}
+    ${img ? `<img class="done-img" style="width:110px;height:110px;align-self:center" src="${img}" alt="">` : ""}
+    ${l.fromPrev ? `<p class="g-same">Same as last time. Tap to change.</p>` : ""}
+    <h4 class="subhead">Application</h4>
+    <div class="chips">${APPLICATIONS.map(a => `<button class="chip ${l.application === a.v ? "on" : ""}" data-act="setlink" data-i="${i}" data-key="application" data-val="${a.v}">${a.t}</button>`).join("")}</div>
+    <h4 class="subhead">Coats</h4>
+    <div class="chips">${COATS.map(n => `<button class="chip ${l.coats === n ? "on" : ""}" data-act="setlink" data-i="${i}" data-key="coats" data-val="${n}">${n === 4 ? "4+" : n}</button>`).join("")}</div>`;
+}
+function bodyFor(name){ return name.startsWith("apply") ? applyBody(Number(name.slice(5))) : BODIES[name](); }
 
 /* ---------- moving between screens ---------- */
 function goStep(delta){ G.step += delta; brandFormOpen = false; saveDraft(); render(); }
 function next(){
-  const step = STEPS[G.step];
+  const steps = stepsOf(G), step = steps[G.step];
   if(step === "name" && !G.name.trim()){ toast("Please type a name first"); return; }
+  if(step === "comboglazes" && G.cglazes.length < 2){ toast("Please pick at least two glazes"); return; }
   if(G.editReturn){ G.editReturn = false; G.step = "editmenu"; render(); return; }
-  if(step === "tags"){ saveGlaze(); return; }
+  if(G.step === steps.length - 1){ saveNew(); return; }
   goStep(1);
 }
 $("g-next").onclick = next;
+$("g-savenow").onclick = () => saveNew();
 $("g-back").onclick = () => {
   if(G.step === "editmenu"){
     if(G.dirty && !confirm("Leave without saving your changes?")) return;
-    openDetail(G.id, DETAIL_FROM); return;
+    renderDetail(G.id); return;
   }
   if(G.editReturn){ G.editReturn = false; G.step = "editmenu"; render(); return; }
-  if(typeof G.step !== "number" || G.step === 0){ show("add"); return; }
+  if(typeof G.step !== "number" || G.step === 0){ leaveWizard(); return; }
   goStep(-1);
 };
-$("g-savenow").onclick = () => saveGlaze();
-$("choose-glaze").onclick = startGlaze;
+function leaveWizard(){ if(G.backTo === "list") openList(LIST.kind, LIST.preset); else show("add"); }
 
 /* ---------- taps inside a screen ---------- */
 $("g-body").addEventListener("click", async (e) => {
@@ -628,13 +774,26 @@ $("g-body").addEventListener("click", async (e) => {
     setTimeout(() => { if(G.step !== "done") next(); }, 260);
   } else if(act === "multi"){
     const arr = G[key], i = arr.indexOf(val); if(i >= 0) arr.splice(i, 1); else arr.push(val);
-    saveDraft(); render();
+    saveDraft(); render(true);
+  } else if(act === "togglepick"){
+    const id = el.dataset.id;
+    if(G.kind === "combo"){ const i = G.cglazes.indexOf(id); if(i >= 0) G.cglazes.splice(i, 1); else G.cglazes.push(id); }
+    else { const i = G.links.findIndex(l => l.id === id); if(i >= 0) G.links.splice(i, 1); else G.links.push({ id, role: (byId(id) || {}).category || "glaze", application: null, coats: null }); }
+    G.dirty = true; refreshPickBadges();
+  } else if(act === "setlink"){
+    const l = G.links[Number(el.dataset.i)]; const v = key === "coats" ? Number(val) : val;
+    l[key] = (l[key] === v) ? null : v; l.fromPrev = false; G.dirty = true; render(true);
+  } else if(act === "setclay"){
+    G.clay = (G.clay === val) ? "" : val; G.dirty = true; render(true);
+    if(G.clay && !G.editReturn) setTimeout(() => { if(G.step !== "done") next(); }, 260);
+  } else if(act === "addclay"){
+    const t = $("g-clay").value.trim(); if(!t) return; G.clay = t; G.dirty = true; render(true);
   } else if(act === "brand"){
-    G.brandId = (G.brandId === el.dataset.id) ? null : el.dataset.id; G.same.brandId = false; saveDraft(); render();
+    G.brandId = (G.brandId === el.dataset.id) ? null : el.dataset.id; G.same.brandId = false; saveDraft(); render(true);
   } else if(act === "suggest"){
     const b = COMMON_BRANDS.find(x => x.name === el.dataset.name); await addBrand(b.name, b.website);
   } else if(act === "brand-new"){
-    brandFormOpen = true; render(); const f = $("bf-name"); if(f) f.focus();
+    brandFormOpen = true; render(true); const f = $("bf-name"); if(f) f.focus();
   } else if(act === "brand-save"){
     const n = $("bf-name").value.trim(); if(!n){ toast("Please type the brand name"); return; }
     await addBrand(n, $("bf-site").value.trim());
@@ -645,55 +804,69 @@ $("g-body").addEventListener("click", async (e) => {
   } else if(act === "rm"){
     const arr = G.photos[el.dataset.kind], p = arr[Number(el.dataset.i)];
     if(p.existing) G.removed.push({ id: p.id, path: p.path }); else URL.revokeObjectURL(p.url);
-    arr.splice(Number(el.dataset.i), 1); G.dirty = true; render();
+    arr.splice(Number(el.dataset.i), 1); G.dirty = true; render(true);
   } else if(act === "editstep"){
-    G.step = Number(el.dataset.i); G.editReturn = true; brandFormOpen = false; render();
+    G.step = stepsOf(G).indexOf(el.dataset.step); G.editReturn = true; brandFormOpen = false; render();
   } else if(act === "saveedit"){
     saveEdit();
   } else if(act === "resume-yes"){
-    const { step, ...rest } = RESUME; Object.assign(G, rest); G.id = RESUME.id; G.step = (typeof step === "number" ? Math.min(step, STEPS.length - 1) : 1); G.same = {};
+    const { step, ...rest } = RESUME; Object.assign(G, rest); G.id = RESUME.id; G.same = {};
+    G.step = (typeof step === "number" ? Math.min(step, stepsOf(G).length - 1) : 1);
     if(G.cone === "high") G.cone = "mid";
     render();
   } else if(act === "resume-no"){
-    lsDel(DRAFT_KEY); G = newGlaze(); render();
+    lsDel(DRAFT_KEY); const back = G.backTo; G = newItem("glaze"); G.backTo = back; render();
   } else if(act === "again"){
-    G = newGlaze(); render();
+    const back = G.backTo, k = G.kind; G = newItem(k); G.backTo = back; render();
   } else if(act === "finish"){
-    goHome();
+    if(G.backTo === "list") openList(LIST.kind, LIST.preset); else goHome();
   }
 });
+function refreshPickBadges(){
+  const order = pickOrder();
+  document.querySelectorAll("#g-body .pickcard").forEach(c => {
+    const n = order.indexOf(c.dataset.id) + 1;
+    c.classList.toggle("on", !!n);
+    const b = c.querySelector(".badgenum"); b.hidden = !n; b.textContent = n || "";
+  });
+  const steps = stepsOf(G); $("g-next").textContent = nextLabel(steps[G.step], G.step === steps.length - 1);
+}
 $("g-body").addEventListener("input", (e) => {
-  if(e.target.id === "g-name"){ G.name = e.target.value; $("g-savenow").hidden = !G.name.trim() || G.editing; }
-  else if(e.target.id === "g-note") G.notes = e.target.value;
+  const id = e.target.id;
+  if(id === "g-name"){ G.name = e.target.value; G.nameEdited = true; $("g-savenow").hidden = !G.name.trim() || G.editing; }
+  else if(id === "g-note") G.notes = e.target.value;
+  else if(id === "pick-q"){
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll("#g-body .pickcard").forEach(c => c.style.display = (!q || c.dataset.name.includes(q)) ? "" : "none");
+  }
   saveDraft();
 });
 $("g-body").addEventListener("keydown", (e) => {
   if(e.key !== "Enter") return;
   if(e.target.id === "g-name"){ e.preventDefault(); next(); }
   else if(e.target.id === "g-tag"){ e.preventDefault(); addTypedTag(); }
+  else if(e.target.id === "g-clay"){ e.preventDefault(); const t = e.target.value.trim(); if(t){ G.clay = t; G.dirty = true; render(true); } }
 });
 function addTypedTag(){
-  const inp = $("g-tag"); const t = inp.value.trim(); if(!t) return;
-  const existing = [...KNOWN_TAGS, ...STARTER_TAGS, ...G.tags].find(x => x.toLowerCase() === t.toLowerCase());
+  const inp = $("g-tag"), t = inp.value.trim(); if(!t) return;
+  const existing = [...knownTags(G.kind), ...STARTER_TAGS[G.kind], ...G.tags].find(x => x.toLowerCase() === t.toLowerCase());
   const tag = existing || t; if(!G.tags.includes(tag)) G.tags.push(tag);
-  saveDraft(); render();
+  saveDraft(); render(true);
 }
 async function addBrand(name, website){
   const found = BRANDS.find(b => b.name.toLowerCase() === name.toLowerCase());
-  if(found){ G.brandId = found.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render(); return; }
+  if(found){ G.brandId = found.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render(true); return; }
   const { data, error } = await sb.from("studio_brands").insert({ name, website: website || null }).select("id,name,website").single();
   if(error){ console.error(error); toast("Couldn't add that brand: " + (error.message || "try again")); return; }
   BRANDS.push(data); BRANDS.sort((a,b) => a.name.localeCompare(b.name));
-  G.brandId = data.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render();
+  G.brandId = data.id; G.same.brandId = false; brandFormOpen = false; saveDraft(); render(true);
 }
 
-/* ---------- photos: shrink them, then keep them until saved ---------- */
+/* ---------- photos ---------- */
 async function shrink(file){
   let bmp;
   try { bmp = await createImageBitmap(file, { imageOrientation: "from-image" }); }
-  catch(e){
-    bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
-  }
+  catch(e){ bmp = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); }); }
   const w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight, k = Math.min(1, 1600 / Math.max(w, h));
   const c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
@@ -702,173 +875,16 @@ async function shrink(file){
 async function takeFiles(input){
   const files = Array.from(input.files || []); input.value = "";
   for(const f of files){
-    try { const blob = await shrink(f); G.photos[pendingKind].push({ blob, url: URL.createObjectURL(blob) }); }
+    try { const blob = await shrink(f); G.photos[pendingKind].push({ blob, url: URL.createObjectURL(blob) }); G.dirty = true; }
     catch(e){ console.error(e); toast("That photo didn't work. Try another."); }
   }
-  if(STEPS[G.step] === "photos") render();
+  if(stepsOf(G)[G.step] === "photos") render(true);
 }
 $("in-cam").addEventListener("change", e => takeFiles(e.target));
 $("in-lib").addEventListener("change", e => takeFiles(e.target));
-
-/* ---------- saving ---------- */
-function overlay(msg){ $("overlay-text").textContent = msg || ""; $("overlay").classList.toggle("show", !!msg); }
-async function saveGlaze(){
-  if(!G.name.trim()){ toast("Please type a name first"); return; }
-  overlay("Saving…");
-  try {
-    const { data: u } = await sb.auth.getUser(); const uid = u.user.id;
-    if(!G.itemSaved){
-      const details = { cone: G.cone, fired_colour: G.firedColour };
-      Object.keys(details).forEach(k => details[k] == null && delete details[k]);
-      const { error } = await sb.from("studio_items").insert({
-        id: G.id, category: "glaze", name: G.name.trim(), brand_id: G.brandId, colour: G.colour,
-        texture: G.textures.length ? G.textures.join(", ") : null, tags: G.tags, notes: G.notes.trim() || null, details });
-      if(error) throw error;
-      G.itemSaved = true;
-    }
-    const failed = await uploadNewPhotos(uid);
-    overlay("");
-    if(failed){ toast(failed + (failed === 1 ? " photo" : " photos") + " didn't upload. Tap Save again to retry."); return; }
-    lsSet(LAST_KEY, { brandId: G.brandId, cone: G.cone });
-    lsDel(DRAFT_KEY);
-    G.step = "done"; render();
-  } catch(err){
-    console.error(err); overlay(""); toast("Couldn't save: " + ((err && err.message) || "check your connection") );
-  }
-}
-
-/* =====================================================================
-   MY GLAZES — list, filters, detail page, editing
-   ===================================================================== */
-let GLAZES = [], DETAIL_FROM = "glazes";
-const F = { q:"", cone:null, colour:null, texture:null, brand:null, tag:null, open:false };
-
-const colourHex = (n) => (COLOURS.find(c => c[0] === n) || [])[1] || "#ccc";
-const coneLabel = (v) => v === "low" ? "Low fire · cone 05/06" : v === "mid" ? "Mid fire · cone 5/6" : "";
-const photoUrl = (path) => sb.storage.from("studio-photos").getPublicUrl(path).data.publicUrl;
-const photosOf = (g) => (g.studio_photos || []).slice().sort((a,b) => String(a.created_at).localeCompare(String(b.created_at)));
-function coverOf(g){
-  const ps = photosOf(g); const p = ps.find(x => x.kind === "fired") || ps.find(x => x.kind === "jar") || ps[0];
-  return p ? photoUrl(p.path) : null;
-}
-
-async function loadGlazes(){
-  const { data, error } = await sb.from("studio_items")
-    .select("id,name,brand_id,colour,texture,tags,notes,details,created_at,studio_photos(id,kind,path,created_at)")
-    .eq("category", "glaze").order("created_at", { ascending: false });
-  if(error){ console.error(error); toast("Couldn't load glazes: " + (error.message || "try again")); return false; }
-  GLAZES = data || []; return true;
-}
-async function refreshGlazes(){ if(await loadGlazes()) renderLately(); }
-function renderLately(){
-  const list = GLAZES.filter(g => coverOf(g)).slice(0, 4), box = $("lately");
-  box.hidden = !list.length;
-  $("lately-row").innerHTML = list.map(g => `<button data-id="${g.id}"><div class="lt"><img src="${coverOf(g)}" alt=""></div><span>${esc(g.name)}</span></button>`).join("");
-}
-$("lately-row").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if(b) openDetail(b.dataset.id, "studio"); });
-
-/* ---------- the list ---------- */
-async function openGlazes(){
-  show("glazes"); renderGlazes();
-  if(!BRANDS.length) loadBrands().then(renderGlazes);
-  await loadGlazes(); renderGlazes();
-}
-function matches(g){
-  const d = g.details || {};
-  if(F.q && !g.name.toLowerCase().includes(F.q.trim().toLowerCase())) return false;
-  if(F.cone && d.cone !== F.cone) return false;
-  if(F.colour && (d.fired_colour || g.colour) !== F.colour) return false;
-  if(F.texture && !(g.texture || "").split(", ").includes(F.texture)) return false;
-  if(F.brand && g.brand_id !== F.brand) return false;
-  if(F.tag && !(g.tags || []).includes(F.tag)) return false;
-  return true;
-}
-const activeFilters = () => ["cone","colour","texture","brand","tag"].filter(k => F[k]).length;
-const fchip = (key, val, label, extra) => `<button class="chip ${F[key] === val ? "on" : ""}" data-f="${key}" data-v="${esc(val)}">${extra || ""}${esc(label)}</button>`;
-function panelHTML(){
-  const brands = BRANDS.filter(b => GLAZES.some(g => g.brand_id === b.id));
-  const tags = [...new Set(GLAZES.flatMap(g => g.tags || []))].slice(0, 16);
-  return `<h4>Firing</h4><div class="chips">${CONES.map(c => fchip("cone", c.v, c.t + " (" + c.h.replace("Cone ", "") + ")")).join("")}</div>
-    <h4>Colour after firing</h4><div class="chips">${COLOURS.map(([n, c]) => fchip("colour", n, n, `<span class="mini" style="background:${c}"></span>`)).join("")}</div>
-    <h4>Texture</h4><div class="chips">${TEXTURES.map(t => fchip("texture", t, t)).join("")}</div>
-    ${brands.length ? `<h4>Brand</h4><div class="chips">${brands.map(b => fchip("brand", b.id, b.name)).join("")}</div>` : ""}
-    ${tags.length ? `<h4>Tags</h4><div class="chips">${tags.map(t => fchip("tag", t, t)).join("")}</div>` : ""}`;
-}
-function cardHTML(g){
-  const d = g.details || {}, img = coverOf(g), col = d.fired_colour || g.colour, b = BRANDS.find(x => x.id === g.brand_id);
-  return `<button class="gcard" data-id="${g.id}"><div class="ph">${img ? `<img src="${img}" alt="" loading="lazy">` : "No photo"}</div>
-    <div class="meta"><div class="nm">${esc(g.name)}</div><div class="sb">${col ? `<span class="mini" style="background:${colourHex(col)}"></span>` : ""}${esc(b ? b.name : "")}</div></div></button>`;
-}
-function renderGlazes(){
-  const list = GLAZES.filter(matches), n = activeFilters();
-  $("gl-count").textContent = list.length === GLAZES.length ? GLAZES.length + (GLAZES.length === 1 ? " glaze" : " glazes") : list.length + " of " + GLAZES.length;
-  $("gl-filter-btn").textContent = n ? `Filters (${n})` : "Filters";
-  $("gl-filter-btn").classList.toggle("on", F.open);
-  $("gl-clear").hidden = !n;
-  $("gl-panel").hidden = !F.open; if(F.open) $("gl-panel").innerHTML = panelHTML();
-  $("gl-grid").innerHTML = list.length ? list.map(cardHTML).join("")
-    : `<div class="empty">${GLAZES.length ? "No glazes match those filters." : "No glazes yet. Go back and tap Add Item!"}</div>`;
-}
-$("screen-glazes").addEventListener("click", (e) => {
-  const card = e.target.closest(".gcard"); if(card){ openDetail(card.dataset.id, "glazes"); return; }
-  const f = e.target.closest("[data-f]");
-  if(f){ const k = f.dataset.f, v = f.dataset.v; F[k] = (F[k] === v) ? null : v; renderGlazes(); return; }
-  if(e.target.closest("#gl-filter-btn")){ F.open = !F.open; renderGlazes(); return; }
-  if(e.target.closest("#gl-clear")){ ["cone","colour","texture","brand","tag"].forEach(k => F[k] = null); renderGlazes(); }
-});
-$("gl-q").addEventListener("input", (e) => { F.q = e.target.value; renderGlazes(); });
-$("tile-glazes").onclick = openGlazes;
-
-/* ---------- one glaze ---------- */
-async function openDetail(id, from){
-  if(from) DETAIL_FROM = from;
-  let g = GLAZES.find(x => x.id === id);
-  if(!g){ await loadGlazes(); g = GLAZES.find(x => x.id === id); }
-  if(!g){ toast("Couldn't find that glaze"); return; }
-  if(!BRANDS.length) await loadBrands();
-  $("d-body").innerHTML = detailHTML(g); show("detail");
-}
-function detailHTML(g){
-  const d = g.details || {}, b = BRANDS.find(x => x.id === g.brand_id);
-  const ps = photosOf(g).map(p => ({ kind: p.kind, url: photoUrl(p.path) }));
-  const first = ps.find(p => p.kind === "fired") || ps.find(p => p.kind === "jar") || ps[0];
-  const hero = first ? `<img id="d-hero" class="d-hero" src="${first.url}" alt="${esc(g.name)}">` : `<div class="d-hero ph">No photo yet</div>`;
-  const thumbs = ps.length > 1 ? `<div class="d-thumbs">${ps.map(p => `<button data-act="hero" data-url="${p.url}" aria-label="Show photo"><img src="${p.url}" alt=""></button>`).join("")}</div>` : "";
-  const dot = (n) => n ? `<span class="mini" style="background:${colourHex(n)}"></span>${esc(n)}` : "";
-  const row = (k, v) => v ? `<div class="fact"><span class="k">${k}</span><span class="v">${v}</span></div>` : "";
-  const facts = row("Brand", b ? esc(b.name) : "") + row("Firing", esc(coneLabel(d.cone))) + row("In the jar", dot(g.colour)) +
-    row("After firing", dot(d.fired_colour)) + row("Texture", esc(g.texture || ""));
-  const tags = (g.tags || []).length ? `<div class="badges">${g.tags.map(t => `<span class="badge">${esc(t)}</span>`).join("")}</div>` : "";
-  return `${hero}${thumbs}<h2 class="d-name">${esc(g.name)}</h2>
-    ${b ? `<a class="linkrow" href="${esc(brandLink(b))}" target="_blank" rel="noopener">Visit ${esc(b.name)}'s website ›</a>` : ""}
-    ${facts ? `<div class="facts">${facts}</div>` : ""}${tags}
-    ${g.notes ? `<div class="notes-card">${esc(g.notes)}</div>` : ""}
-    <button class="tile pinkt" data-act="edit" data-id="${g.id}" style="min-height:84px;font-size:28px;margin-top:6px">Edit</button>
-    <button class="pill" data-act="delete" data-id="${g.id}" style="color:#B00039;border-color:#B00039;align-self:center">Delete this glaze</button>`;
-}
-$("d-back").onclick = () => { if(DETAIL_FROM === "studio") goHome(); else openGlazes(); };
-$("d-body").addEventListener("click", (e) => {
-  const el = e.target.closest("[data-act]"); if(!el) return;
-  if(el.dataset.act === "hero"){ const h = $("d-hero"); if(h) h.src = el.dataset.url; }
-  else if(el.dataset.act === "edit") startEdit(el.dataset.id);
-  else if(el.dataset.act === "delete") deleteGlaze(el.dataset.id);
-});
-
-/* ---------- editing: a menu of single-question screens ---------- */
-function startEdit(id){
-  const g = GLAZES.find(x => x.id === id); if(!g) return;
-  const d = g.details || {};
-  G = newGlaze();
-  Object.assign(G, { id: g.id, editing: true, step: "editmenu", name: g.name, brandId: g.brand_id, cone: d.cone || null,
-    colour: g.colour || null, firedColour: d.fired_colour || null, textures: (g.texture || "").split(", ").filter(Boolean),
-    tags: [...(g.tags || [])], notes: g.notes || "", itemSaved: true, same: {}, detailsBase: { ...d } });
-  G.photos = { jar: [], fired: [] };
-  photosOf(g).forEach(p => G.photos[p.kind === "fired" ? "fired" : "jar"].push({ existing: true, id: p.id, path: p.path, url: photoUrl(p.path), done: true }));
-  brandFormOpen = false; show("glaze"); render(); loadBrands(); loadTags();
-}
 async function uploadNewPhotos(uid){
   let failed = 0;
-  for(const kind of ["jar","fired"]){
+  for(const kind of Object.keys(G.photos)){
     const keep = [];
     for(const p of G.photos[kind]){
       if(p.done){ keep.push(p); continue; }
@@ -883,17 +899,68 @@ async function uploadNewPhotos(uid){
   }
   return failed;
 }
+
+/* ---------- saving ---------- */
+function rowFor(g){
+  const row = { name: g.name.trim(), tags: g.tags, notes: g.notes.trim() || null };
+  if(g.kind === "glaze"){
+    const d = { ...g.detailsBase, cone: g.cone, fired_colour: g.firedColour };
+    Object.keys(d).forEach(k => d[k] == null && delete d[k]);
+    Object.assign(row, { brand_id: g.brandId, colour: g.colour, texture: g.textures.length ? g.textures.join(", ") : null, details: d });
+  } else if(g.kind === "combo"){
+    row.details = { ...g.detailsBase };
+  } else {
+    const d = { ...g.detailsBase, medium: "ceramic", status: g.status, clay: g.clay || null };
+    if(g.status === "complete") d.completed_at = d.completed_at || new Date().toISOString(); else delete d.completed_at;
+    Object.keys(d).forEach(k => d[k] == null && delete d[k]);
+    row.details = d;
+  }
+  return row;
+}
+async function writeRelations(g){
+  if(g.kind === "combo"){
+    let r = await sb.from("studio_combo_glazes").delete().eq("combo_id", g.id); if(r.error) throw r.error;
+    if(g.cglazes.length){
+      r = await sb.from("studio_combo_glazes").insert(g.cglazes.map((gid, i) => ({ combo_id: g.id, glaze_id: gid, layer_order: i + 1 })));
+      if(r.error) throw r.error;
+    }
+  } else if(g.kind === "work"){
+    let r = await sb.from("studio_links").delete().eq("item_id", g.id); if(r.error) throw r.error;
+    if(g.links.length){
+      r = await sb.from("studio_links").insert(g.links.map((l, i) => ({ item_id: g.id, linked_id: l.id, role: l.role, application: l.application || null, coats: l.coats || null, sort_order: i })));
+      if(r.error) throw r.error;
+    }
+  }
+}
+async function saveNew(){
+  if(!G.name.trim()){ toast("Please type a name first"); return; }
+  overlay("Saving…");
+  try {
+    const { data: u } = await sb.auth.getUser(); const uid = u.user.id;
+    if(!G.itemSaved){
+      const { error } = await sb.from("studio_items").insert({ id: G.id, category: G.kind, ...rowFor(G) });
+      if(error) throw error;
+      G.itemSaved = true;
+    }
+    if(!G.relDone){ await writeRelations(G); G.relDone = true; }
+    const failed = await uploadNewPhotos(uid);
+    overlay("");
+    if(failed){ toast(failed + (failed === 1 ? " photo" : " photos") + " didn't upload. Tap Save again to retry."); return; }
+    if(G.kind === "glaze"){ lsSet(LAST_KEY, { brandId: G.brandId, cone: G.cone }); lsDel(DRAFT_KEY); }
+    if(G.kind === "work" && G.links.length){ const l = G.links[G.links.length - 1]; lsSet(LAST_APPLY, { application: l.application, coats: l.coats }); }
+    G.step = "done"; render(); refreshAll();
+  } catch(err){
+    console.error(err); overlay(""); toast("Couldn't save: " + ((err && err.message) || "check your connection"));
+  }
+}
 async function saveEdit(){
   if(!G.name.trim()){ toast("Please type a name first"); return; }
   overlay("Saving…");
   try {
     const { data: u } = await sb.auth.getUser(); const uid = u.user.id;
-    const details = { ...G.detailsBase, cone: G.cone, fired_colour: G.firedColour };
-    Object.keys(details).forEach(k => details[k] == null && delete details[k]);
-    const { error } = await sb.from("studio_items").update({
-      name: G.name.trim(), brand_id: G.brandId, colour: G.colour, texture: G.textures.length ? G.textures.join(", ") : null,
-      tags: G.tags, notes: G.notes.trim() || null, details, updated_at: new Date().toISOString() }).eq("id", G.id);
+    const { error } = await sb.from("studio_items").update({ ...rowFor(G), updated_at: new Date().toISOString() }).eq("id", G.id);
     if(error) throw error;
+    await writeRelations(G);
     if(G.removed.length){
       const r = await sb.from("studio_photos").delete().in("id", G.removed.map(x => x.id)); if(r.error) throw r.error;
       await sb.storage.from("studio-photos").remove(G.removed.map(x => x.path));
@@ -901,37 +968,230 @@ async function saveEdit(){
     }
     const failed = await uploadNewPhotos(uid);
     if(failed){ overlay(""); toast(failed + (failed === 1 ? " photo" : " photos") + " didn't upload. Tap Save changes to retry."); return; }
-    await loadGlazes(); overlay(""); G.dirty = false;
-    renderLately(); openDetail(G.id, DETAIL_FROM);
+    await loadAll(); overlay(""); G.dirty = false; renderLately(); renderDetail(G.id);
   } catch(err){
     console.error(err); overlay(""); toast("Couldn't save: " + ((err && err.message) || "check your connection"));
   }
 }
-async function deleteGlaze(id){
-  const g = GLAZES.find(x => x.id === id); if(!g) return;
-  if(!confirm("Delete “" + g.name + "” for good?")) return;
+
+/* =====================================================================
+   LISTS: My Glazes, Glaze Combos, Works in Progress, Finished Works
+   ===================================================================== */
+let LIST = { kind: "glaze", preset: null }, LF = { q: "", open: false, sel: {} };
+
+function listTitle(){
+  if(LIST.kind === "glaze") return "My Glazes";
+  if(LIST.kind === "combo") return "Glaze Combos";
+  const s = LIST.preset && LIST.preset.status; return s === "complete" ? "Finished Works" : s === "in_progress" ? "Works in Progress" : "All Works";
+}
+async function openList(kind, preset){
+  LIST = { kind, preset: preset || null }; LF = { q: "", open: false, sel: { ...(preset || {}) } };
+  $("ls-title").textContent = listTitle(); $("ls-q").value = "";
+  $("ls-add").textContent = "+ Add a " + (kind === "combo" ? "glaze combo" : NOUN[kind]);
+  show("list"); renderList();
+  if(kind === "glaze" && !BRANDS.length) loadBrands().then(renderList);
+  await loadAll(); renderList();
+}
+function matches(it){
+  const d = it.details || {}, s = LF.sel;
+  if(LF.q && !it.name.toLowerCase().includes(LF.q.trim().toLowerCase())) return false;
+  if(s.tag && !(it.tags || []).includes(s.tag)) return false;
+  if(LIST.kind === "glaze"){
+    if(s.cone && d.cone !== s.cone) return false;
+    if(s.colour && (d.fired_colour || it.colour) !== s.colour) return false;
+    if(s.texture && !(it.texture || "").split(", ").includes(s.texture)) return false;
+    if(s.brand && it.brand_id !== s.brand) return false;
+  } else if(LIST.kind === "combo"){
+    if(s.glaze && !comboGlazes(it.id).includes(s.glaze)) return false;
+  } else {
+    if(s.status && (d.status || "in_progress") !== s.status) return false;
+    if(s.used && !linksOf(it.id).some(l => l.linked_id === s.used)) return false;
+    if(s.clay && d.clay !== s.clay) return false;
+  }
+  return true;
+}
+const activeFilters = () => Object.keys(LF.sel).filter(k => LF.sel[k] && !(LIST.preset && k in LIST.preset)).length;
+const fchip = (key, val, label, extra) => `<button class="chip ${LF.sel[key] === val ? "on" : ""}" data-f="${key}" data-v="${esc(val)}">${extra || ""}${esc(label)}</button>`;
+function panelHTML(){
+  const here = items(LIST.kind);
+  const tags = [...new Set(here.flatMap(i => i.tags || []))].slice(0, 16);
+  const tagBlock = tags.length ? `<h4>Tags</h4><div class="chips">${tags.map(t => fchip("tag", t, t)).join("")}</div>` : "";
+  if(LIST.kind === "glaze"){
+    const brands = BRANDS.filter(b => here.some(g => g.brand_id === b.id));
+    return `<h4>Firing</h4><div class="chips">${CONES.map(c => fchip("cone", c.v, c.t + " (" + c.h.replace("Cone ", "") + ")")).join("")}</div>
+      <h4>Colour after firing</h4><div class="chips">${COLOURS.map(([n, c]) => fchip("colour", n, n, `<span class="mini" style="background:${c}"></span>`)).join("")}</div>
+      <h4>Texture</h4><div class="chips">${TEXTURES.map(t => fchip("texture", t, t)).join("")}</div>
+      ${brands.length ? `<h4>Brand</h4><div class="chips">${brands.map(b => fchip("brand", b.id, b.name)).join("")}</div>` : ""}${tagBlock}`;
+  }
+  if(LIST.kind === "combo"){
+    const used = [...new Set(CG.map(r => r.glaze_id))].map(byId).filter(Boolean);
+    return `${used.length ? `<h4>Made with</h4><div class="chips">${used.map(g => fchip("glaze", g.id, g.name)).join("")}</div>` : ""}${tagBlock}`;
+  }
+  const used = [...new Set(LINKS.map(l => l.linked_id))].map(byId).filter(Boolean), clays = knownClays();
+  return `<h4>Status</h4><div class="chips">${fchip("status", "in_progress", "In progress")}${fchip("status", "complete", "Finished")}</div>
+    ${used.length ? `<h4>Made with</h4><div class="chips">${used.map(g => fchip("used", g.id, g.name)).join("")}</div>` : ""}
+    ${clays.length ? `<h4>Clay</h4><div class="chips">${clays.map(c => fchip("clay", c, c)).join("")}</div>` : ""}${tagBlock}`;
+}
+function cardHTML(it){
+  const d = it.details || {}, img = coverOf(it); let sub = "";
+  if(it.category === "glaze"){
+    const col = d.fired_colour || it.colour, b = BRANDS.find(x => x.id === it.brand_id);
+    sub = `${col ? `<span class="mini" style="background:${colourHex(col)}"></span>` : ""}${esc(b ? b.name : "")}`;
+  } else if(it.category === "combo"){
+    const n = comboGlazes(it.id).length; sub = n + (n === 1 ? " glaze" : " glazes");
+  } else {
+    sub = esc(linksOf(it.id).map(l => (byId(l.linked_id) || {}).name).filter(Boolean).join(", "));
+  }
+  return `<button class="gcard" data-id="${it.id}"><div class="ph">${img ? `<img src="${img}" alt="" loading="lazy">` : "No photo"}</div>
+    <div class="meta"><div class="nm">${esc(it.name)}</div><div class="sb">${sub}</div></div></button>`;
+}
+function renderList(){
+  const all = items(LIST.kind), shown = all.filter(matches), n = activeFilters();
+  const base = LIST.preset && LIST.preset.status ? all.filter(i => ((i.details || {}).status || "in_progress") === LIST.preset.status).length : all.length;
+  $("ls-count").textContent = shown.length === base ? base + " " + (base === 1 ? NOUN[LIST.kind] : NOUN[LIST.kind] + "s") : shown.length + " of " + base;
+  $("ls-filter-btn").textContent = n ? `Filters (${n})` : "Filters";
+  $("ls-filter-btn").classList.toggle("on", LF.open);
+  $("ls-clear").hidden = !n;
+  $("ls-panel").hidden = !LF.open; if(LF.open) $("ls-panel").innerHTML = panelHTML();
+  const none = { glaze: "No glazes yet.", combo: "No combos yet.", work: "Nothing here yet." }[LIST.kind];
+  $("ls-grid").innerHTML = shown.length ? shown.map(cardHTML).join("") : `<div class="empty">${base ? "Nothing matches those filters." : none + " Tap the pink button above to add one!"}</div>`;
+}
+$("screen-list").addEventListener("click", (e) => {
+  const card = e.target.closest(".gcard"); if(card){ openDetail(card.dataset.id, { type: "list" }); return; }
+  const f = e.target.closest("[data-f]");
+  if(f){ const k = f.dataset.f, v = f.dataset.v; LF.sel[k] = (LF.sel[k] === v) ? null : v; renderList(); return; }
+  if(e.target.closest("#ls-filter-btn")){ LF.open = !LF.open; renderList(); return; }
+  if(e.target.closest("#ls-clear")){ LF.sel = { ...(LIST.preset || {}) }; renderList(); return; }
+  if(e.target.closest("#ls-add")) startNew(LIST.kind, "list");
+});
+$("ls-q").addEventListener("input", (e) => { LF.q = e.target.value; renderList(); });
+
+/* =====================================================================
+   ONE ITEM: detail page
+   ===================================================================== */
+let DSTACK = [], DBASE = { type: "studio" };
+async function openDetail(id, base){
+  DBASE = base || DBASE; DSTACK = [id];
+  if(!byId(id)) await loadAll();
+  if(!BRANDS.length) await loadBrands();
+  renderDetail(id);
+}
+function renderDetail(id){
+  const it = byId(id);
+  if(!it){ toast("Couldn't find that one"); return; }
+  if(DSTACK[DSTACK.length - 1] !== id) DSTACK[DSTACK.length ? DSTACK.length - 1 : 0] = id;
+  $("d-body").innerHTML = detailHTML(it); show("detail");
+}
+$("d-back").onclick = () => {
+  if(DSTACK.length > 1){ DSTACK.pop(); renderDetail(DSTACK[DSTACK.length - 1]); return; }
+  if(DBASE.type === "list") openList(LIST.kind, LIST.preset); else goHome();
+};
+function lrow(it, sub){
+  const img = coverOf(it);
+  return `<button class="lrow" data-act="open" data-id="${it.id}"><span class="lth">${img ? `<img src="${img}" alt="">` : ""}</span>
+    <span class="ltx"><span class="ln">${esc(it.name)}</span>${sub ? `<span class="ls">${esc(sub)}</span>` : ""}</span><span class="chev">›</span></button>`;
+}
+function detailHTML(it){
+  const d = it.details || {}, b = BRANDS.find(x => x.id === it.brand_id);
+  const ps = photosOf(it).map(p => ({ kind: p.kind, url: photoUrl(p.path) }));
+  const first = (() => { for(const k of ["fired","combo","main","jar"]){ const p = ps.find(x => x.kind === k); if(p) return p; } return ps[0]; })();
+  const hero = first ? `<img id="d-hero" class="d-hero" src="${first.url}" alt="${esc(it.name)}">` : `<div class="d-hero ph">No photo yet</div>`;
+  const thumbs = ps.length > 1 ? `<div class="d-thumbs">${ps.map(p => `<button data-act="hero" data-url="${p.url}" aria-label="Show photo"><img src="${p.url}" alt=""></button>`).join("")}</div>` : "";
+  const dot = (n) => n ? `<span class="mini" style="background:${colourHex(n)}"></span>${esc(n)}` : "";
+  const row = (k, v) => v ? `<div class="fact"><span class="k">${k}</span><span class="v">${v}</span></div>` : "";
+  const tags = (it.tags || []).length ? `<div class="badges">${it.tags.map(t => `<span class="badge">${esc(t)}</span>`).join("")}</div>` : "";
+  const notes = it.notes ? `<div class="notes-card">${esc(it.notes)}</div>` : "";
+  const used = usedIn(it.id);
+  const usedBlock = used.length ? `<h4 class="subhead">Used in</h4><div class="lrows">${used.map(u => lrow(u, u.category === "combo" ? "Combo" : (u.details || {}).status === "complete" ? "Finished work" : "Work in progress")).join("")}</div>` : "";
+  let mid = "", actions = "";
+  if(it.category === "glaze"){
+    mid = `${b ? `<a class="linkrow" href="${esc(brandLink(b))}" target="_blank" rel="noopener">Visit ${esc(b.name)}'s website ›</a>` : ""}
+      <div class="facts">${row("Brand", b ? esc(b.name) : "") + row("Firing", esc(coneLabel(d.cone))) + row("In the jar", dot(it.colour)) + row("After firing", dot(d.fired_colour)) + row("Texture", esc(it.texture || ""))}</div>
+      ${usedBlock}${tags}${notes}`;
+  } else if(it.category === "combo"){
+    const layers = comboGlazes(it.id).map(byId).filter(Boolean);
+    mid = `<h4 class="subhead">Layers, bottom first</h4><div class="lrows">${layers.map((g, i) => lrow(g, "Layer " + (i + 1))).join("")}</div>${usedBlock}${tags}${notes}`;
+  } else {
+    const done = d.status === "complete";
+    const links = linksOf(it.id).map(l => ({ l, it: byId(l.linked_id) })).filter(x => x.it);
+    mid = `<div class="badges"><span class="badge ${done ? "st-done" : "st-wip"}">${done ? "Finished" : "In progress"}</span></div>
+      ${links.length ? `<h4 class="subhead">Made with</h4><div class="lrows">${links.map(x => lrow(x.it, applySummary(x.l))).join("")}</div>` : ""}
+      ${d.clay || d.completed_at ? `<div class="facts">${row("Clay", esc(d.clay || ""))}${done && d.completed_at ? row("Finished", esc(new Date(d.completed_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }))) : ""}</div>` : ""}
+      ${tags}${notes}`;
+    actions = done
+      ? `<button class="pill" data-act="setstatus" data-id="${it.id}" data-val="in_progress" style="align-self:center">Move back to in progress</button>`
+      : `<button class="tile burg" data-act="setstatus" data-id="${it.id}" data-val="complete" style="min-height:84px;font-size:26px">Mark as finished</button>`;
+  }
+  return `${hero}${thumbs}<h2 class="d-name">${esc(it.name)}</h2>${mid}${actions}
+    <button class="tile pinkt" data-act="edit" data-id="${it.id}" style="min-height:84px;font-size:28px;margin-top:6px">Edit</button>
+    <button class="pill" data-act="delete" data-id="${it.id}" style="color:#B00039;border-color:#B00039;align-self:center">Delete this ${NOUN[it.category]}</button>`;
+}
+$("d-body").addEventListener("click", (e) => {
+  const el = e.target.closest("[data-act]"); if(!el) return;
+  const act = el.dataset.act;
+  if(act === "hero"){ const h = $("d-hero"); if(h) h.src = el.dataset.url; }
+  else if(act === "open"){ DSTACK.push(el.dataset.id); renderDetail(el.dataset.id); }
+  else if(act === "edit") startEdit(el.dataset.id);
+  else if(act === "delete") deleteItem(el.dataset.id);
+  else if(act === "setstatus") setStatus(el.dataset.id, el.dataset.val);
+});
+async function setStatus(id, status){
+  const it = byId(id); const d = { ...(it.details || {}), status };
+  if(status === "complete") d.completed_at = d.completed_at || new Date().toISOString(); else delete d.completed_at;
+  overlay("Saving…");
+  const { error } = await sb.from("studio_items").update({ details: d, updated_at: new Date().toISOString() }).eq("id", id);
+  if(error){ overlay(""); toast("Couldn't update: " + error.message); return; }
+  await loadAll(); overlay(""); renderDetail(id);
+  toast(status === "complete" ? "Moved to Finished Works!" : "Moved back to in progress");
+}
+
+/* ---------- editing ---------- */
+function startEdit(id){
+  const it = byId(id); if(!it) return;
+  const d = it.details || {}, kind = it.category;
+  G = newItem(kind);
+  Object.assign(G, { id: it.id, editing: true, step: "editmenu", name: it.name, nameEdited: true, tags: [...(it.tags || [])], notes: it.notes || "",
+    itemSaved: true, same: {}, detailsBase: { ...d } });
+  if(kind === "glaze") Object.assign(G, { brandId: it.brand_id, cone: d.cone || null, colour: it.colour || null, firedColour: d.fired_colour || null,
+    textures: (it.texture || "").split(", ").filter(Boolean) });
+  if(kind === "combo") G.cglazes = comboGlazes(it.id);
+  if(kind === "work"){
+    G.status = d.status || "in_progress"; G.clay = d.clay || "";
+    G.links = linksOf(it.id).map(l => ({ id: l.linked_id, role: l.role, application: l.application || null, coats: l.coats || null, touched: true }));
+  }
+  const keys = PHOTO_KEYS[kind];
+  photosOf(it).forEach(p => G.photos[keys.includes(p.kind) ? p.kind : keys[0]].push({ existing: true, id: p.id, path: p.path, url: photoUrl(p.path), done: true }));
+  brandFormOpen = false; show("glaze"); render();
+  if(kind === "glaze" && !BRANDS.length) loadBrands();
+}
+async function deleteItem(id){
+  const it = byId(id); if(!it) return;
+  const used = usedIn(id).length;
+  const msg = "Delete “" + it.name + "” for good?" + (used ? "\n\nIt will also be taken out of " + used + (used === 1 ? " item" : " items") + " that use it." : "");
+  if(!confirm(msg)) return;
   overlay("Deleting…");
   try {
-    const paths = photosOf(g).map(p => p.path);
+    const paths = photosOf(it).map(p => p.path);
     if(paths.length) await sb.storage.from("studio-photos").remove(paths);
     const { error } = await sb.from("studio_items").delete().eq("id", id); if(error) throw error;
-    await loadGlazes(); overlay(""); renderLately(); openGlazes();
+    await loadAll(); overlay(""); renderLately();
+    if(DBASE.type === "list") openList(LIST.kind, LIST.preset); else goHome();
   } catch(err){
     console.error(err); overlay(""); toast("Couldn't delete: " + ((err && err.message) || "try again"));
   }
 }
 
 /* ---------- start-up: keep her logged in ---------- */
-function onlyIfOnLoginOrLoading(){
+function onLoginOrLoading(){
   return $("screen-login").classList.contains("active") || $("screen-loading").classList.contains("active");
 }
 sb.auth.onAuthStateChange((_event, session) => {
   if(!session) show("login");
-  else if(onlyIfOnLoginOrLoading()) goHome();
+  else if(onLoginOrLoading()) goHome();
 });
 sb.auth.getSession().then(({ data }) => {
   if(!data.session) show("login");
-  else if(onlyIfOnLoginOrLoading()) goHome();
+  else if(onLoginOrLoading()) goHome();
 });
 </script>
 </body>
