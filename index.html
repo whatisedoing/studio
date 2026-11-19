@@ -441,15 +441,17 @@ const STARTER_TAGS = {
   glaze: ["Favourite","Layers well","Runs","Test again","Food safe"],
   combo: ["Favourite","Reliable","Surprising","Test again"],
   work:  ["Mug","Bowl","Plate","Vase","Planter","Gift","For sale","Experiment"],
-  clay:  ["Favourite","Throws well","Handbuilding","Sculpting","Test again"]
+  clay:  ["Favourite","Throws well","Handbuilding","Sculpting","Test again"],
+  tool:  ["Favourite","Borrowed","Needs replacing","Wheel","Handbuilding"]
 };
 const COMMON_BRANDS = [
   {name:"Amaco", website:"https://www.amaco.com"}, {name:"Mayco", website:"https://www.maycocolors.com"},
   {name:"Spectrum", website:"https://www.spectrumglazes.com"}, {name:"Duncan", website:"https://www.duncanceramics.com"},
   {name:"Coyote", website:"https://www.coyoteclay.com"}, {name:"Laguna", website:"https://www.lagunaclay.com"}
 ];
-const PHOTO_KEYS = { glaze: ["jar","fired"], combo: ["combo"], work: ["main"], clay: ["main"] };
-const NOUN = { glaze: "glaze", combo: "combo", work: "piece", clay: "clay body" };
+const PHOTO_KEYS = { glaze: ["jar","fired"], combo: ["combo"], work: ["main"], clay: ["main"], tool: ["main"] };
+const NOUN = { glaze: "glaze", combo: "combo", work: "piece", clay: "clay body", tool: "tool" };
+const TOOL_TYPES = ["Carving","Brush","Rib","Sponge","Wire","Cutter","Stamp","Trimming","Measuring","Other"];
 const CLAY_TEXTURES = ["Smooth","Grogged","Speckled","Rough"];
 const isGL = (k) => k === "glaze" || k === "clay";
 const texturesFor = (k) => k === "clay" ? CLAY_TEXTURES : TEXTURES;
@@ -484,6 +486,7 @@ function usedIn(id){
   const works = LINKS.filter(l => l.linked_id === id).map(l => byId(l.item_id));
   return [...new Set([...combos, ...works].filter(Boolean))];
 }
+function knownLocations(){ return [...new Set(items("tool").map(t => (t.details || {}).location).filter(Boolean))]; }
 function knownTags(kind){
   const n = {}; items(kind).forEach(i => (i.tags || []).forEach(t => n[t] = (n[t] || 0) + 1));
   return Object.keys(n).sort((a,b) => n[b] - n[a]);
@@ -522,11 +525,13 @@ function renderLately(){
 $("lately-row").addEventListener("click", (e) => { const b = e.target.closest("button[data-id]"); if(b) openDetail(b.dataset.id, { type: "studio" }); });
 
 const soon = () => toast("Coming soon ✨");
-["tile-tools","tile-search","choose-tool"].forEach(id => $(id).onclick = soon);
+["tile-search"].forEach(id => $(id).onclick = soon);
 $("tile-glazes").onclick = () => openList("glaze");
 $("tile-combos").onclick = () => openList("combo");
 $("tile-pieces").onclick = () => openList("work");
 $("tile-clay").onclick   = () => openList("clay");
+$("tile-tools").onclick  = () => openList("tool");
+$("choose-tool").onclick = () => startNew("tool", "add");
 $("choose-clay").onclick = () => startNew("clay", "add");
 $("choose-glaze").onclick = () => startNew("glaze", "add");
 $("choose-combo").onclick = () => startNew("combo", "add");
@@ -541,12 +546,13 @@ function stepsOf(g){
   if(g.kind === "glaze") return ["photos","name","brand","cone","colour","firedcolour","texture","tags"];
   if(g.kind === "combo") return ["comboglazes","photos","name","tags"];
   if(g.kind === "clay") return ["photos","name","brand","cone","colour","texture","tags"];
+  if(g.kind === "tool") return ["photos","name","tooltype","location","tags"];
   return ["photos","name","status","worklinks", ...g.links.map((_, i) => "apply" + i), "clay","tags"];
 }
 function newItem(kind){
   const last = lsGet(LAST_KEY) || {};
   const g = { kind, id: uuid(), step: 0, backTo: "add", photos: {}, name: "", nameEdited: false, brandId: null, cone: null,
-    colour: null, firedColour: null, textures: [], tags: [], notes: "", cglazes: [], links: [], status: "in_progress", clayId: null,
+    colour: null, firedColour: null, textures: [], tags: [], notes: "", cglazes: [], links: [], status: "in_progress", clayId: null, toolType: null, location: "",
     itemSaved: false, relDone: false, same: {}, editing: false, editReturn: false, removed: [], dirty: false, detailsBase: {} };
   PHOTO_KEYS[kind].forEach(k => g.photos[k] = []);
   if(kind === "glaze"){
@@ -594,7 +600,7 @@ function hasValue(step){
   if(step.startsWith("apply")){ const l = G.links[Number(step.slice(5))]; return !!(l && (l.application || l.coats)); }
   return ({ photos: Object.values(G.photos).some(a => a.length), name: true, brand: !!G.brandId, cone: !!G.cone,
     colour: !!G.colour, firedcolour: !!G.firedColour, texture: G.textures.length > 0, tags: true,
-    comboglazes: true, status: true, worklinks: G.links.length > 0, clay: !!G.clayId })[step];
+    comboglazes: true, status: true, worklinks: G.links.length > 0, clay: !!G.clayId, tooltype: !!G.toolType, location: !!G.location })[step];
 }
 const title = (t, sub) => `<h2 class="g-title">${t}</h2>${sub ? `<p class="g-sub">${sub}</p>` : ""}`;
 const sameNote = (k) => G.same[k] ? `<p class="g-same">Same as last time. Tap to keep it.</p>` : "";
@@ -629,6 +635,7 @@ const BODIES = {
     if(G.kind === "glaze") return `${title("Photos", "Totally optional. You can add more later.")}
       ${photoCard("jar", "The jar or a swatch", "No photo yet")}${photoCard("fired", "A fired example", "No photo yet")}`;
     if(G.kind === "combo") return `${title("Photos", "What does the combo look like fired?")}${photoCard("combo", "Photos of the combo", "No photo yet")}`;
+    if(G.kind === "tool") return `${title("Photos", "Optional")}${photoCard("main", "Photos of the tool", "No photo yet")}`;
     if(G.kind === "clay") return `${title("Photos", "Optional")}${photoCard("main", "Photos of the clay", "No photo yet")}`;
     return `${title("Photos", "The piece as it is right now")}${photoCard("main", "Photos of the piece", "No photo yet")}`;
   },
@@ -637,7 +644,7 @@ const BODIES = {
     if(G.kind === "combo" && !G.name.trim() && !G.nameEdited && G.cglazes.length){
       G.name = G.cglazes.map(id => (byId(id) || {}).name).filter(Boolean).join(" + ");
     }
-    const ph = { glaze: "e.g. Celadon Blue", combo: "e.g. Blue over honey", work: "e.g. Tall mug", clay: "e.g. B-Mix white" }[G.kind];
+    const ph = { glaze: "e.g. Celadon Blue", combo: "e.g. Blue over honey", work: "e.g. Tall mug", clay: "e.g. B-Mix white", tool: "e.g. Yellow rib" }[G.kind];
     return `${title(G.kind === "work" ? "What's it called?" : "What's it called?")}
       <input id="g-name" class="txt" type="text" autocomplete="off" autocapitalize="words" placeholder="${ph}" value="${esc(G.name)}">`;
   },
@@ -683,6 +690,17 @@ const BODIES = {
     ${items("combo").length ? `<h4 class="subhead">Combos</h4>${pickGrid(items("combo"), pickOrder())}` : ""}
     ${items("glaze").length ? `<h4 class="subhead">Glazes</h4>${pickGrid(items("glaze"), pickOrder())}` : ""}`,
 
+  tooltype: () => `${title("What kind of tool?")}
+    <div class="chips">${TOOL_TYPES.map(t => `<button class="chip ${G.toolType === t ? "on" : ""}" data-act="pick" data-key="toolType" data-val="${t}">${t}</button>`).join("")}</div>`,
+
+  location: () => {
+    const known = knownLocations(); if(G.location && !known.includes(G.location)) known.push(G.location);
+    return `${title("Where do you keep it?", "Optional")}
+      <div class="chips">${known.map(c => `<button class="chip ${G.location === c ? "on" : ""}" data-act="setloc" data-val="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      <div style="display:flex;gap:10px;width:100%"><input id="g-loc" class="txt" type="text" placeholder="e.g. Blue drawer" style="flex:1">
+      <button class="chip on" data-act="addloc" style="min-height:68px">Add</button></div>`;
+  },
+
   clay: () => {
     const list = items("clay");
     return `${title("What clay did you use?", "Optional")}
@@ -706,7 +724,8 @@ const BODIES = {
     const T = ["tags", "Tags & notes", G.tags.length ? G.tags.join(", ") : (G.notes ? "Notes" : "")];
     let rows;
     const clayName = (byId(G.clayId) || {}).name || "";
-    if(G.kind === "clay") rows = [P, ["name","Name",G.name], ["brand","Brand",brand ? brand.name : ""], ["cone","Firing",coneLabel(G.cone)],
+    if(G.kind === "tool") rows = [P, ["name","Name",G.name], ["tooltype","Kind",G.toolType || ""], ["location","Kept in",G.location], T];
+    else if(G.kind === "clay") rows = [P, ["name","Name",G.name], ["brand","Brand",brand ? brand.name : ""], ["cone","Firing",coneLabel(G.cone)],
       ["colour","Colour after firing",G.colour], ["texture","Texture",G.textures.join(", ")], T];
     else if(G.kind === "glaze") rows = [P, ["name","Name",G.name], ["brand","Brand",brand ? brand.name : ""], ["cone","Firing",coneLabel(G.cone)],
       ["colour","Colour in the jar",G.colour], ["firedcolour","Colour after firing",G.firedColour], ["texture","Texture",G.textures.join(", ")], T];
@@ -790,6 +809,11 @@ $("g-body").addEventListener("click", async (e) => {
   } else if(act === "setlink"){
     const l = G.links[Number(el.dataset.i)]; const v = key === "coats" ? Number(val) : val;
     l[key] = (l[key] === v) ? null : v; l.fromPrev = false; G.dirty = true; render(true);
+  } else if(act === "setloc"){
+    G.location = (G.location === val) ? "" : val; G.dirty = true; render(true);
+    if(G.location && !G.editReturn) setTimeout(() => { if(G.step !== "done") next(); }, 260);
+  } else if(act === "addloc"){
+    const t = $("g-loc").value.trim(); if(!t) return; G.location = t; G.dirty = true; render(true);
   } else if(act === "pickclay"){
     G.clayId = (G.clayId === el.dataset.id) ? null : el.dataset.id; G.dirty = true; refreshPickBadges();
     if(G.clayId && !G.editReturn) setTimeout(() => { if(G.step !== "done") next(); }, 260);
@@ -849,6 +873,7 @@ $("g-body").addEventListener("input", (e) => {
 $("g-body").addEventListener("keydown", (e) => {
   if(e.key !== "Enter") return;
   if(e.target.id === "g-name"){ e.preventDefault(); next(); }
+  else if(e.target.id === "g-loc"){ e.preventDefault(); const t = e.target.value.trim(); if(t){ G.location = t; G.dirty = true; render(true); } }
   else if(e.target.id === "g-tag"){ e.preventDefault(); addTypedTag(); }
 });
 function addTypedTag(){
@@ -911,6 +936,10 @@ function rowFor(g){
     const d = { ...g.detailsBase, cone: g.cone, fired_colour: g.kind === "glaze" ? g.firedColour : null };
     Object.keys(d).forEach(k => d[k] == null && delete d[k]);
     Object.assign(row, { brand_id: g.brandId, colour: g.colour, texture: g.textures.length ? g.textures.join(", ") : null, details: d });
+  } else if(g.kind === "tool"){
+    const d = { ...g.detailsBase, type: g.toolType, location: g.location || null };
+    Object.keys(d).forEach(k => d[k] == null && delete d[k]);
+    row.details = d;
   } else if(g.kind === "combo"){
     row.details = { ...g.detailsBase };
   } else {
@@ -991,7 +1020,7 @@ let LIST = { kind: "glaze", preset: null }, LF = { q: "", open: false, sel: {} }
 function listTitle(){
   if(LIST.kind === "glaze") return "My Glazes";
   if(LIST.kind === "combo") return "Glaze Combos";
-  return LIST.kind === "clay" ? "Clay Bodies" : "Pieces";
+  return LIST.kind === "clay" ? "Clay Bodies" : LIST.kind === "tool" ? "Tools" : "Pieces";
 }
 async function openList(kind, preset){
   LIST = { kind, preset: preset || null }; LF = { q: "", open: false, sel: { ...(preset || {}) } };
@@ -1011,6 +1040,9 @@ function matches(it){
     if(s.colour && (d.fired_colour || it.colour) !== s.colour) return false;
     if(s.texture && !(it.texture || "").split(", ").includes(s.texture)) return false;
     if(s.brand && it.brand_id !== s.brand) return false;
+  } else if(LIST.kind === "tool"){
+    if(s.type && d.type !== s.type) return false;
+    if(s.loc && d.location !== s.loc) return false;
   } else if(LIST.kind === "combo"){
     if(s.glaze && !comboGlazes(it.id).includes(s.glaze)) return false;
   } else {
@@ -1033,6 +1065,11 @@ function panelHTML(){
       <h4>Texture</h4><div class="chips">${texturesFor(LIST.kind).map(t => fchip("texture", t, t)).join("")}</div>
       ${brands.length ? `<h4>Brand</h4><div class="chips">${brands.map(b => fchip("brand", b.id, b.name)).join("")}</div>` : ""}${tagBlock}`;
   }
+  if(LIST.kind === "tool"){
+    const types = [...new Set(here.map(t => (t.details || {}).type).filter(Boolean))], locs = knownLocations();
+    return `${types.length ? `<h4>Kind</h4><div class="chips">${types.map(t => fchip("type", t, t)).join("")}</div>` : ""}
+      ${locs.length ? `<h4>Kept in</h4><div class="chips">${locs.map(t => fchip("loc", t, t)).join("")}</div>` : ""}${tagBlock}`;
+  }
   if(LIST.kind === "combo"){
     const used = [...new Set(CG.map(r => r.glaze_id))].map(byId).filter(Boolean);
     return `${used.length ? `<h4>Made with</h4><div class="chips">${used.map(g => fchip("glaze", g.id, g.name)).join("")}</div>` : ""}${tagBlock}`;
@@ -1047,6 +1084,8 @@ function cardHTML(it){
   if(isGL(it.category)){
     const col = d.fired_colour || it.colour, b = BRANDS.find(x => x.id === it.brand_id);
     sub = `${col ? `<span class="mini" style="background:${colourHex(col)}"></span>` : ""}${esc(b ? b.name : "")}`;
+  } else if(it.category === "tool"){
+    sub = esc(d.type || "");
   } else if(it.category === "combo"){
     const n = comboGlazes(it.id).length; sub = n + (n === 1 ? " glaze" : " glazes");
   } else {
@@ -1059,13 +1098,13 @@ function renderList(){
   const all = items(LIST.kind), shown = all.filter(matches), n = activeFilters();
   const base = all.length;
   if(LIST.kind === "work") $("ls-quick").innerHTML = [["", "All"], ["in_progress", "In progress"], ["complete", "Finished"]].map(([v, t]) => `<button class="chip ${(LF.sel.status || "") === v ? "on" : ""}" style="flex:1" data-f="status" data-v="${v}">${t}</button>`).join("");
-  const PL = { glaze: "glazes", combo: "combos", work: "pieces", clay: "clay bodies" };
+  const PL = { glaze: "glazes", combo: "combos", work: "pieces", clay: "clay bodies", tool: "tools" };
   $("ls-count").textContent = shown.length === base ? base + " " + (base === 1 ? NOUN[LIST.kind] : PL[LIST.kind]) : shown.length + " of " + base;
   $("ls-filter-btn").textContent = n ? `Filters (${n})` : "Filters";
   $("ls-filter-btn").classList.toggle("on", LF.open);
   $("ls-clear").hidden = !n;
   $("ls-panel").hidden = !LF.open; if(LF.open) $("ls-panel").innerHTML = panelHTML();
-  const none = { glaze: "No glazes yet.", combo: "No combos yet.", work: "No pieces yet.", clay: "No clay bodies yet." }[LIST.kind];
+  const none = { glaze: "No glazes yet.", combo: "No combos yet.", work: "No pieces yet.", clay: "No clay bodies yet.", tool: "No tools yet." }[LIST.kind];
   $("ls-grid").innerHTML = shown.length ? shown.map(cardHTML).join("") : `<div class="empty">${base ? "Nothing matches those filters." : none + " Tap the pink button above to add one!"}</div>`;
 }
 $("screen-list").addEventListener("click", (e) => {
@@ -1120,6 +1159,8 @@ function detailHTML(it){
     mid = `${b ? `<a class="linkrow" href="${esc(brandLink(b))}" target="_blank" rel="noopener">Visit ${esc(b.name)}'s website ›</a>` : ""}
       <div class="facts">${row("Brand", b ? esc(b.name) : "") + row("Firing", esc(coneLabel(d.cone))) + (it.category === "clay" ? row("Colour", dot(it.colour)) : row("In the jar", dot(it.colour)) + row("After firing", dot(d.fired_colour))) + row("Texture", esc(it.texture || ""))}</div>
       ${usedBlock}${tags}${notes}`;
+  } else if(it.category === "tool"){
+    mid = `<div class="facts">${row("Kind", esc(d.type || "")) + row("Kept in", esc(d.location || ""))}</div>${tags}${notes}`;
   } else if(it.category === "combo"){
     const layers = comboGlazes(it.id).map(byId).filter(Boolean);
     mid = `<h4 class="subhead">Layers, bottom first</h4><div class="lrows">${layers.map((g, i) => lrow(g, "Layer " + (i + 1))).join("")}</div>${usedBlock}${tags}${notes}`;
@@ -1165,6 +1206,7 @@ function startEdit(id){
   G = newItem(kind);
   Object.assign(G, { id: it.id, editing: true, step: "editmenu", name: it.name, nameEdited: true, tags: [...(it.tags || [])], notes: it.notes || "",
     itemSaved: true, same: {}, detailsBase: { ...d } });
+  if(kind === "tool"){ G.toolType = d.type || null; G.location = d.location || ""; }
   if(isGL(kind)) Object.assign(G, { brandId: it.brand_id, cone: d.cone || null, colour: it.colour || null, firedColour: d.fired_colour || null,
     textures: (it.texture || "").split(", ").filter(Boolean) });
   if(kind === "combo") G.cglazes = comboGlazes(it.id);
