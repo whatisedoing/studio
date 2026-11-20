@@ -216,6 +216,9 @@
   .done-name{font-size:24px;font-weight:800;text-align:center}
   .erow .el{flex:0 1 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #ls-quick .chip{padding:0 6px;min-width:0;font-size:18px}
+  .addown{width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  .ao-col{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:800;font-size:20px;color:var(--burgundy);background:#fff;border:3px solid var(--teal);border-radius:20px;padding:8px 14px}
+  .ao-col input{width:90px;height:52px;border:0;background:none;padding:0}
 </style>
 </head>
 <body>
@@ -484,8 +487,40 @@ const isGL = (k) => k === "glaze" || k === "clay";
 const texturesFor = (k) => k === "clay" ? CLAY_TEXTURES : TEXTURES;
 const LAST_KEY = "studioLastGlaze", DRAFT_KEY = "studioGlazeDraft", LAST_APPLY = "studioLastApply";
 
-const colourHex = (n) => (COLOURS.find(c => c[0] === n) || [])[1] || "#ccc";
-const coneLabel = (v) => v === "both" ? "Low or mid fire" : v === "low" ? "Low fire · cone 05/06" : v === "mid" ? "Mid fire · cone 5/6" : "";
+let CUSTOM_HEX = {};
+function rebuildCustom(){
+  CUSTOM_HEX = {};
+  ALL.forEach(it => { const d = it.details || {};
+    if(it.colour && d.colour_hex) CUSTOM_HEX[it.colour] = d.colour_hex;
+    if(d.fired_colour && d.fired_colour_hex) CUSTOM_HEX[d.fired_colour] = d.fired_colour_hex; });
+}
+const colourHex = (n) => (COLOURS.find(c => c[0] === n) || [])[1] || (typeof G !== "undefined" && G && G.hexes && G.hexes[n]) || CUSTOM_HEX[n] || "#ccc";
+function colourOptions(){
+  const names = new Set(COLOURS.map(c => c[0])), out = COLOURS.slice();
+  const extra = [...Object.keys(CUSTOM_HEX), ...((typeof G !== "undefined" && G) ? [...Object.keys(G.hexes || {}), G.colour, G.firedColour] : [])];
+  extra.forEach(n => { if(n && !names.has(n)){ names.add(n); out.push([n, colourHex(n)]); } });
+  return out;
+}
+const BASE_CONES = ["low","mid","both"];
+function coneOptions(kind){
+  const out = (kind === "clay" ? [...CONES, {v:"both", t:"Either", h:"Works at both"}] : CONES.slice());
+  const seen = new Set(BASE_CONES);
+  const vals = [...ALL.filter(i => i.category === "glaze" || i.category === "clay").map(i => (i.details || {}).cone), (typeof G !== "undefined" && G) ? G.cone : null];
+  vals.forEach(v => { if(v && !seen.has(v)){ seen.add(v); out.push({ v, t: v, h: "" }); } });
+  return out;
+}
+function textureOptions(kind){
+  const base = texturesFor(kind), out = base.slice();
+  const vals = [...items(kind).flatMap(i => (i.texture || "").split(", ")), ...((typeof G !== "undefined" && G && G.kind === kind) ? G.textures : [])];
+  vals.forEach(v => { if(v && !out.includes(v)) out.push(v); });
+  return out;
+}
+function toolTypeOptions(){
+  const out = TOOL_TYPES.slice();
+  [...items("tool").map(t => (t.details || {}).type), (typeof G !== "undefined" && G) ? G.toolType : null].forEach(v => { if(v && !out.includes(v)) out.push(v); });
+  return out;
+}
+const coneLabel = (v) => v === "both" ? "Low or mid fire" : v === "low" ? "Low fire · cone 05/06" : v === "mid" ? "Mid fire · cone 5/6" : (v || "");
 const appLabel = (v) => (APPLICATIONS.find(a => a.v === v) || {}).t || "";
 const photoUrl = (path) => sb.storage.from("studio-photos").getPublicUrl(path).data.publicUrl;
 function brandLink(b){
@@ -527,7 +562,7 @@ async function loadAll(){
   ]);
   const err = a.error || l.error || c.error;
   if(err){ console.error(err); toast("Couldn't load: " + (err.message || "try again")); return false; }
-  ALL = a.data || []; LINKS = l.data || []; CG = c.data || [];
+  ALL = a.data || []; LINKS = l.data || []; CG = c.data || []; rebuildCustom();
   return true;
 }
 async function loadBrands(){
@@ -581,7 +616,7 @@ function stepsOf(g){
 function newItem(kind){
   const last = lsGet(LAST_KEY) || {};
   const g = { kind, id: uuid(), step: 0, backTo: "add", photos: {}, name: "", nameEdited: false, brandId: null, cone: null,
-    colour: null, firedColour: null, textures: [], tags: [], notes: "", cglazes: [], links: [], status: "in_progress", clayId: null, toolType: null, location: "",
+    colour: null, firedColour: null, textures: [], tags: [], notes: "", cglazes: [], links: [], status: "in_progress", clayId: null, toolType: null, location: "", hexes: {},
     itemSaved: false, relDone: false, same: {}, editing: false, editReturn: false, removed: [], dirty: false, detailsBase: {} };
   PHOTO_KEYS[kind].forEach(k => g.photos[k] = []);
   if(kind === "glaze"){
@@ -595,7 +630,7 @@ function saveDraft(){
   if(G.editing){ G.dirty = true; return; }
   if(G.kind !== "glaze") return;
   lsSet(DRAFT_KEY, { id: G.id, step: G.step, name: G.name, brandId: G.brandId, cone: G.cone, colour: G.colour,
-    firedColour: G.firedColour, textures: G.textures, tags: G.tags, notes: G.notes });
+    firedColour: G.firedColour, textures: G.textures, tags: G.tags, notes: G.notes, hexes: G.hexes });
 }
 function startNew(kind, backTo){
   const draft = kind === "glaze" ? lsGet(DRAFT_KEY) : null;
@@ -632,6 +667,13 @@ function hasValue(step){
     comboglazes: true, status: true, worklinks: G.links.length > 0, clay: !!G.clayId, tooltype: !!G.toolType, location: !!G.location })[step];
 }
 const title = (t, sub) => `<h2 class="g-title">${t}</h2>${sub ? `<p class="g-sub">${sub}</p>` : ""}`;
+const clearBtn = (key) => G[key] ? `<button class="chip dashed" data-act="clearsel" data-key="${key}" style="min-height:60px;align-self:center">Clear my choice</button>` : "";
+function addOwnHTML(step, ph, withHex){
+  if(!brandFormOpen) return `<button class="chip dashed" data-act="openown" style="min-height:64px;align-self:center">+ Add your own</button>`;
+  return `<div class="addown"><input id="ao-name" class="txt" type="text" autocapitalize="words" placeholder="${ph}">
+    ${withHex ? `<label class="ao-col"><span>Swatch colour</span><input id="ao-hex" type="color" value="#2F8F8F"></label>` : ""}
+    <button class="chip on" data-act="addown" data-step="${step}" style="min-height:64px">Add</button></div>`;
+}
 const sameNote = (k) => G.same[k] ? `<p class="g-same">Same as last time. Tap to keep it.</p>` : "";
 
 function photoCard(kind, heading, hint){
@@ -695,16 +737,20 @@ const BODIES = {
   },
 
   cone: () => `${title("Which firing?")}${sameNote("cone")}` +
-    (G.kind === "clay" ? [...CONES, {v:"both", t:"Either", h:"Works at both"}] : CONES).map(c => `<button class="opt ${G.cone === c.v ? "on" : ""}" data-act="pick" data-key="cone" data-val="${c.v}">${c.t}<span class="hint">${c.h}</span></button>`).join(""),
+    coneOptions(G.kind).map(c => `<button class="opt ${G.cone === c.v ? "on" : ""}" data-act="pick" data-key="cone" data-val="${esc(c.v)}">${esc(c.t)}${c.h ? `<span class="hint">${c.h}</span>` : ""}</button>`).join("") +
+    addOwnHTML("cone", "e.g. Cone 10") + clearBtn("cone"),
 
   colour: () => `${title(G.kind === "clay" ? "What colour is it after firing?" : "What colour is it in the jar?")}
-    <div class="sw-grid">${COLOURS.map(([n, c]) => `<button class="sw ${G.colour === n ? "on" : ""}" data-act="pick" data-key="colour" data-val="${n}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`,
+    <div class="sw-grid">${colourOptions().map(([n, c]) => `<button class="sw ${G.colour === n ? "on" : ""}" data-act="pick" data-key="colour" data-val="${esc(n)}"><span class="dot" style="background:${c}"></span>${esc(n)}</button>`).join("")}</div>
+    ${addOwnHTML("colour", "Colour name, e.g. Teal", true)}${clearBtn("colour")}`,
 
   firedcolour: () => `${title("What colour is it after firing?")}
-    <div class="sw-grid">${COLOURS.map(([n, c]) => `<button class="sw ${G.firedColour === n ? "on" : ""}" data-act="pick" data-key="firedColour" data-val="${n}"><span class="dot" style="background:${c}"></span>${n}</button>`).join("")}</div>`,
+    <div class="sw-grid">${colourOptions().map(([n, c]) => `<button class="sw ${G.firedColour === n ? "on" : ""}" data-act="pick" data-key="firedColour" data-val="${esc(n)}"><span class="dot" style="background:${c}"></span>${esc(n)}</button>`).join("")}</div>
+    ${addOwnHTML("firedcolour", "Colour name, e.g. Teal", true)}${clearBtn("firedColour")}`,
 
   texture: () => `${title("What's it like?", "Pick as many as you like")}
-    <div class="chips">${texturesFor(G.kind).map(t => `<button class="chip ${G.textures.includes(t) ? "on" : ""}" data-act="multi" data-key="textures" data-val="${t}">${t}</button>`).join("")}</div>`,
+    <div class="chips">${textureOptions(G.kind).map(t => `<button class="chip ${G.textures.includes(t) ? "on" : ""}" data-act="multi" data-key="textures" data-val="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+    ${addOwnHTML("texture", "e.g. Waxy")}`,
 
   comboglazes: () => `${title("Which glazes?", "Tap them in the order you put them on, bottom layer first.")}
     <input id="pick-q" class="txt" type="search" placeholder="Search glazes" autocomplete="off">
@@ -720,7 +766,8 @@ const BODIES = {
     ${items("glaze").length ? `<h4 class="subhead">Glazes</h4>${pickGrid(items("glaze"), pickOrder())}` : ""}`,
 
   tooltype: () => `${title("What kind of tool?")}
-    <div class="chips">${TOOL_TYPES.map(t => `<button class="chip ${G.toolType === t ? "on" : ""}" data-act="pick" data-key="toolType" data-val="${t}">${t}</button>`).join("")}</div>`,
+    <div class="chips">${toolTypeOptions().map(t => `<button class="chip ${G.toolType === t ? "on" : ""}" data-act="pick" data-key="toolType" data-val="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+    ${addOwnHTML("tooltype", "e.g. Scraper")}${clearBtn("toolType")}`,
 
   location: () => {
     const known = knownLocations(); if(G.location && !known.includes(G.location)) known.push(G.location);
@@ -824,7 +871,30 @@ $("g-body").addEventListener("click", async (e) => {
   const el = e.target.closest("[data-act]"); if(!el) return;
   const act = el.dataset.act, key = el.dataset.key, val = el.dataset.val;
   if(act === "pick"){
-    G[key] = val; if(G.same) G.same[key] = false;
+    const clearing = (G[key] === val && key !== "status");
+    G[key] = clearing ? null : val; if(G.same) G.same[key] = false;
+    saveDraft(); render(clearing);
+    if(!clearing) setTimeout(() => { if(G.step !== "done") next(); }, 260);
+  } else if(act === "clearsel"){
+    G[key] = null; if(G.same) G.same[key] = false; saveDraft(); render(true);
+  } else if(act === "openown"){
+    brandFormOpen = true; render(true); const f = $("ao-name"); if(f) f.focus();
+  } else if(act === "addown"){
+    const name = $("ao-name").value.trim().replace(/,/g, " ");
+    if(!name){ toast("Please type a name first"); return; }
+    const st = el.dataset.step; brandFormOpen = false;
+    if(st === "texture"){
+      const ex = textureOptions(G.kind).find(x => x.toLowerCase() === name.toLowerCase()) || name;
+      if(!G.textures.includes(ex)) G.textures.push(ex);
+      saveDraft(); render(true); return;
+    }
+    if(st === "cone"){ const ex = coneOptions(G.kind).find(c => c.t.toLowerCase() === name.toLowerCase() || c.v.toLowerCase() === name.toLowerCase()); G.cone = ex ? ex.v : name; }
+    else if(st === "tooltype"){ G.toolType = toolTypeOptions().find(x => x.toLowerCase() === name.toLowerCase()) || name; }
+    else {
+      const ex = colourOptions().find(c => c[0].toLowerCase() === name.toLowerCase());
+      const nm = ex ? ex[0] : name; if(!ex) G.hexes[nm] = $("ao-hex").value;
+      if(st === "colour") G.colour = nm; else G.firedColour = nm;
+    }
     saveDraft(); render();
     setTimeout(() => { if(G.step !== "done") next(); }, 260);
   } else if(act === "multi"){
@@ -902,6 +972,7 @@ $("g-body").addEventListener("input", (e) => {
 $("g-body").addEventListener("keydown", (e) => {
   if(e.key !== "Enter") return;
   if(e.target.id === "g-name"){ e.preventDefault(); next(); }
+  else if(e.target.id === "ao-name"){ e.preventDefault(); const b = document.querySelector("[data-act=addown]"); if(b) b.click(); }
   else if(e.target.id === "g-loc"){ e.preventDefault(); const t = e.target.value.trim(); if(t){ G.location = t; G.dirty = true; render(true); } }
   else if(e.target.id === "g-tag"){ e.preventDefault(); addTypedTag(); }
 });
@@ -962,7 +1033,9 @@ async function uploadNewPhotos(uid){
 function rowFor(g){
   const row = { name: g.name.trim(), tags: g.tags, notes: g.notes.trim() || null };
   if(isGL(g.kind)){
-    const d = { ...g.detailsBase, cone: g.cone, fired_colour: g.kind === "glaze" ? g.firedColour : null };
+    const hx = (n) => (n && !COLOURS.some(c => c[0] === n)) ? colourHex(n) : null;
+    const d = { ...g.detailsBase, cone: g.cone, fired_colour: g.kind === "glaze" ? g.firedColour : null,
+      colour_hex: hx(g.colour), fired_colour_hex: g.kind === "glaze" ? hx(g.firedColour) : null };
     Object.keys(d).forEach(k => d[k] == null && delete d[k]);
     Object.assign(row, { brand_id: g.brandId, colour: g.colour, texture: g.textures.length ? g.textures.join(", ") : null, details: d });
   } else if(g.kind === "tool"){
@@ -1089,9 +1162,9 @@ function panelHTML(){
   const tagBlock = tags.length ? `<h4>Tags</h4><div class="chips">${tags.map(t => fchip("tag", t, t)).join("")}</div>` : "";
   if(isGL(LIST.kind)){
     const brands = BRANDS.filter(b => here.some(g => g.brand_id === b.id));
-    return `<h4>Firing</h4><div class="chips">${(LIST.kind === "clay" ? [...CONES, {v:"both", t:"Either", h:"Cone both"}] : CONES).map(c => fchip("cone", c.v, c.v === "both" ? "Either" : c.t + " (" + c.h.replace("Cone ", "") + ")")).join("")}</div>
-      <h4>${LIST.kind === "clay" ? "Colour" : "Colour after firing"}</h4><div class="chips">${COLOURS.map(([n, c]) => fchip("colour", n, n, `<span class="mini" style="background:${c}"></span>`)).join("")}</div>
-      <h4>Texture</h4><div class="chips">${texturesFor(LIST.kind).map(t => fchip("texture", t, t)).join("")}</div>
+    return `<h4>Firing</h4><div class="chips">${coneOptions(LIST.kind).map(c => fchip("cone", c.v, c.v === "both" ? "Either" : c.h && c.h.startsWith("Cone ") ? c.t + " (" + c.h.replace("Cone ", "") + ")" : c.t)).join("")}</div>
+      <h4>${LIST.kind === "clay" ? "Colour" : "Colour after firing"}</h4><div class="chips">${colourOptions().map(([n, c]) => fchip("colour", n, n, `<span class="mini" style="background:${c}"></span>`)).join("")}</div>
+      <h4>Texture</h4><div class="chips">${textureOptions(LIST.kind).map(t => fchip("texture", t, t)).join("")}</div>
       ${brands.length ? `<h4>Brand</h4><div class="chips">${brands.map(b => fchip("brand", b.id, b.name)).join("")}</div>` : ""}${tagBlock}`;
   }
   if(LIST.kind === "tool"){
